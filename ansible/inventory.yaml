@@ -1,0 +1,10 @@
+all:
+  hosts:
+    www-1:
+      ansible_host: "{{ lookup('env', 'ANSIBLE_HOST') }}"
+      ansible_user: root
+      ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_PRIVATE_KEY_FILE') }}"
+  children:
+    proxy_host:
+      hosts:
+        www-1:
