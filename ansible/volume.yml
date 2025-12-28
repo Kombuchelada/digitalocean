@@ -31,8 +31,6 @@
     opts: defaults,nofail,noatime
     state: mounted
 
-- meta: reset_connection
-
 - name: Create Docker data root and services directories
   ansible.builtin.file:
     path: "{{ item }}"

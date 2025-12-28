@@ -15,6 +15,9 @@
     - name: Include volume setup
       ansible.builtin.include_tasks: volume.yml
 
+    - name: Reset Connection after volume mount
+      meta: reset_connection
+
     - name: Include Docker installation
       ansible.builtin.include_tasks: docker.yml
 
