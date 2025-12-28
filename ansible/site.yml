@@ -14,18 +14,6 @@
   tasks:
     - name: Include volume setup
       ansible.builtin.include_tasks: volume.yml
-
-    - name: Reset Connection after volume mount
-      meta: reset_connection
-
-    - name: Wait for SSH to be available after mount
-      ansible.builtin.wait_for_connection:
-        delay: 2
-        timeout: 120
-
-    - name: Verify host connectivity post-mount
-      ansible.builtin.ping:
-
     - name: Include Docker installation
       ansible.builtin.include_tasks: docker.yml
 
