@@ -1,74 +1,61 @@
 ---
-- name: Prepare Docker volume layout
-  hosts: proxy_host
-  become: true
-  vars:
-    volume_device: /dev/disk/by-id/scsi-0DO_Volume_docker-data-volume
-    mount_path: /mnt/docker-data
-    legacy_mount_path: /mnt/docker_data_volume
-    docker_dir: "{{ mount_path }}/docker"
-    services_dir: "{{ mount_path }}/services"
-    npm_dirs:
-      - "{{ services_dir }}/npm/data"
-      - "{{ services_dir }}/npm/letsencrypt"
-  tasks:
-    - name: Unmount legacy mount if present (DigitalOcean default)
-      ansible.posix.mount:
-        path: "{{ legacy_mount_path }}"
-        state: unmounted
-      ignore_errors: true
+- name: Unmount legacy mount if present (DigitalOcean default)
+  ansible.posix.mount:
+    path: "{{ legacy_mount_path }}"
+    state: unmounted
+  ignore_errors: true
 
-    - name: Remove legacy fstab entry if present
-      ansible.posix.mount:
-        path: "{{ legacy_mount_path }}"
-        state: absent
-      ignore_errors: true
+- name: Remove legacy fstab entry if present
+  ansible.posix.mount:
+    path: "{{ legacy_mount_path }}"
+    state: absent
+  ignore_errors: true
 
-    - name: Remove legacy mount directory if empty
-      ansible.builtin.file:
-        path: "{{ legacy_mount_path }}"
-        state: absent
-      ignore_errors: true
+- name: Remove legacy mount directory if empty
+  ansible.builtin.file:
+    path: "{{ legacy_mount_path }}"
+    state: absent
+  ignore_errors: true
 
-    - name: Create mount point
-      ansible.builtin.file:
-        path: "{{ mount_path }}"
-        state: directory
-        mode: "0755"
+- name: Create mount point
+  ansible.builtin.file:
+    path: "{{ mount_path }}"
+    state: directory
+    mode: "0755"
 
-    - name: Mount block storage at desired path
-      ansible.posix.mount:
-        path: "{{ mount_path }}"
-        src: "{{ volume_device }}"
-        fstype: ext4
-        opts: defaults,nofail,noatime
-        state: mounted
+- name: Mount block storage at desired path
+  ansible.posix.mount:
+    path: "{{ mount_path }}"
+    src: "{{ volume_device }}"
+    fstype: ext4
+    opts: defaults,nofail,noatime
+    state: mounted
 
-    - name: Create Docker data root and services directories
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: directory
-        mode: "0755"
-      loop:
-        - "{{ docker_dir }}"
-        - "{{ services_dir }}"
+- name: Create Docker data root and services directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ docker_dir }}"
+    - "{{ services_dir }}"
 
-    - name: Create nginx proxy manager data directories
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: directory
-        mode: "0755"
-      loop: "{{ npm_dirs }}"
+- name: Create nginx proxy manager data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ npm_dirs }}"
 
-    - name: Show resulting mount and layout
-      ansible.builtin.command: df -h "{{ mount_path }}"
-      register: mount_df
-      changed_when: false
+- name: Show resulting mount and layout
+  ansible.builtin.command: df -h "{{ mount_path }}"
+  register: mount_df
+  changed_when: false
 
-    - name: Debug layout paths
-      ansible.builtin.debug:
-        msg:
-          - "Mounted at: {{ mount_path }}"
-          - "Docker root candidate: {{ docker_dir }}"
-          - "Services root: {{ services_dir }}"
-          - "NPM data: {{ npm_dirs }}"
+- name: Debug layout paths
+  ansible.builtin.debug:
+    msg:
+      - "Mounted at: {{ mount_path }}"
+      - "Docker root candidate: {{ docker_dir }}"
+      - "Services root: {{ services_dir }}"
+      - "NPM data: {{ npm_dirs }}"

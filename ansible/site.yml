@@ -2,6 +2,15 @@
 - name: Configure Infrastructure
   hosts: proxy_host
   become: true
+  vars:
+    volume_device: /dev/disk/by-id/scsi-0DO_Volume_docker-data-volume
+    mount_path: /mnt/docker-data
+    legacy_mount_path: /mnt/docker_data_volume
+    docker_dir: "{{ mount_path }}/docker"
+    services_dir: "{{ mount_path }}/services"
+    npm_dirs:
+      - "{{ services_dir }}/npm/data"
+      - "{{ services_dir }}/npm/letsencrypt"
   tasks:
     - name: Include volume setup
       ansible.builtin.include_tasks: volume.yml
