@@ -1,6 +1,6 @@
-# Terraform and Ansible for my DigitalOcean
+# DigitalOcean Infra with Terraform + Ansible + GitHub Actions
 
-This project provisions a DigitalOcean droplet and a block storage volume with Terraform, then configures the server filesystem layout using Ansible to prepare for running services (like nginx proxy manager) via Docker.
+This project provisions a DigitalOcean droplet, DNS records, and a block storage volume with Terraform, then configures the server filesystem layout with Ansible. A GitHub Actions workflow automates planning/applying and configuration.
 
 ## Overview
 - Terraform creates resources in DigitalOcean (droplet, DNS, volume, attachment).
@@ -10,7 +10,7 @@ This project provisions a DigitalOcean droplet and a block storage volume with T
 Project layout:
 - Terraform files in [terraform](terraform)
 - Ansible files in [ansible](ansible)
-- Env templates: [.env.example](.env.example), optional loader: [.envrc](.envrc)
+- CI workflow: [.github/workflows/infra.yml](.github/workflows/infra.yml)
 
 ## Prerequisites
 
@@ -108,18 +108,56 @@ findmnt /mnt/docker-data
 - Deploy Docker and nginx proxy manager with bind mounts under `/mnt/docker-data/services/npm/`.
 - Optionally move Docker root to `/mnt/docker-data/docker` for more root disk headroom.
 
-## TODO: GitHub Actions Setup
-- Terraform workflow:
-  - Add `.github/workflows/terraform.yml` to run `terraform fmt -check`, `terraform init`, `terraform plan`.
-  - Store `DO_PAT` as a GitHub Actions secret; pass to workflow as `TF_VAR_do_token`.
-  - Use a remote backend for state (Terraform Cloud or DO Spaces) to avoid storing `terraform.tfstate`.
-- Ansible workflow:
-  - Use a deploy job with `ansible-playbook` via `ssh` to the droplet or a self-hosted runner.
-  - Inject `ANSIBLE_HOST` and `ANSIBLE_PRIVATE_KEY` via GitHub secrets; consider short-lived deploy keys.
-- Linting & checks:
-  - Add `tflint` and `terraform validate` steps.
-  - Add `ansible-lint` for playbooks.
-- Pre-commit hooks:
-  - Configure `.pre-commit-config.yaml` for Terraform fmt/validate and YAML formatting.
-- Environment management:
-  - Avoid secrets in `.env.example`; document required envs in README only.
+## CI Setup (GitHub Actions)
+
+The workflow in [.github/workflows/infra.yml](.github/workflows/infra.yml) will:
+- Run `terraform init`/`plan` on PRs and pushes
+- Auto-apply on `main` (push or dispatch)
+- Pass the droplet IP to Ansible and run the playbook
+
+### Required GitHub Secrets and Variables
+
+- Secret DIGITALOCEAN_ACCESS_TOKEN: a DigitalOcean PAT with write access
+- Secret SSH_PRIVATE_KEY: private key matching your DO account SSH key (used by provisioner and Ansible)
+- Secret TF_API_TOKEN: Terraform Cloud API token (for remote backend auth)
+- Secret DOMAIN: the root domain to manage (e.g. `example.com`)
+
+Add these in your repository settings:
+1. Settings → Secrets and variables → Actions → New repository secret: DIGITALOCEAN_ACCESS_TOKEN
+2. New repository secret: SSH_PRIVATE_KEY
+3. New repository secret: TF_API_TOKEN
+4. New repository secret: DOMAIN
+
+Optional: protect apply with an environment (Settings → Environments). Then set `environment: production` on the apply step and require approvals.
+
+### First Run
+
+Trigger a run on `main` after secrets are set:
+
+```bash
+gh workflow run "Infrastructure CI" -r main
+```
+
+Or push to `main` to auto-apply.
+
+## Remote State (Terraform Cloud)
+
+This project is set up to use Terraform Cloud for state storage and locking. Configure your organization and workspace in [terraform/backend.tf](terraform/backend.tf):
+
+- Set `organization` to your Terraform Cloud org name.
+- Set `workspaces.name` to your desired workspace (e.g., `tf-sample-prod`).
+
+Then migrate local state to Terraform Cloud (interactive):
+
+```bash
+cd terraform
+# Ensure you're logged into Terraform Cloud (or rely on TF_API_TOKEN in CI)
+terraform login
+
+# Run init and accept the migration prompt when asked
+terraform init
+```
+
+Note: `-migrate-state` is not used with Terraform Cloud. Migration is performed via interactive prompts during `terraform init`.
+
+The CI workflow authenticates to Terraform Cloud using the `TF_API_TOKEN` secret via the `hashicorp/setup-terraform` action. No manual login is needed in CI.

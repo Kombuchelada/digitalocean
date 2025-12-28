@@ -1,0 +1,97 @@
+name: Infrastructure CI
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: infra-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform:
+    name: Terraform Plan & Apply
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    outputs:
+      droplet_ip: ${{ steps.outputs_step.outputs.www_1_ip }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform (with TFC token)
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Write SSH private key for provisioning
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$HOME/.ssh"
+          echo "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          echo "TF_VAR_pvt_key=$HOME/.ssh/id_ed25519" >> $GITHUB_ENV
+
+      - name: Set Terraform variables
+        shell: bash
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+        run: |
+          echo "TF_VAR_do_token=$DIGITALOCEAN_ACCESS_TOKEN" >> $GITHUB_ENV
+          echo "TF_VAR_domain=$DOMAIN" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform Apply (main only)
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Capture Terraform outputs
+        id: outputs_step
+        run: |
+          echo "www_1_ip=$(terraform output -raw www_1_ip)" >> $GITHUB_OUTPUT
+
+  ansible:
+    name: Ansible Configure Host
+    needs: terraform
+    runs-on: ubuntu-latest
+    env:
+      ANSIBLE_HOST: ${{ needs.terraform.outputs.droplet_ip }}
+      ANSIBLE_PRIVATE_KEY_FILE: $HOME/.ssh/id_ed25519
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write SSH private key
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$HOME/.ssh"
+          echo "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ansible
+
+      - name: Run Ansible playbook
+        working-directory: ansible
+        run: ansible-playbook -i inventory.yaml site.yml -vv
