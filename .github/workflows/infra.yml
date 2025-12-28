@@ -15,6 +15,7 @@ concurrency:
 jobs:
   terraform:
     name: Terraform Plan & Apply
+    environment: prod
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -69,6 +70,7 @@ jobs:
 
   ansible:
     name: Ansible Configure Host
+    environment: prod
     needs: terraform
     runs-on: ubuntu-latest
     env:
