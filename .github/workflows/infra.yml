@@ -90,11 +90,16 @@ jobs:
           chmod 600 "$HOME/.ssh/id_ed25519"
           echo "ANSIBLE_PRIVATE_KEY_FILE=$HOME/.ssh/id_ed25519" >> $GITHUB_ENV
 
-      - name: Install Ansible
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install ansible
-
-      - name: Run Ansible playbook
+      - name: Run Ansible playbook via Execution Environment
         working-directory: ansible
-        run: ansible-playbook -i inventory.yaml site.yml -vv
+        env:
+          ANSIBLE_CONFIG: /work/ansible.cfg
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/ansible:/work" \
+            -v "$HOME/.ssh/id_ed25519:/tmp/id_ed25519:ro" \
+            -w /work \
+            -e ANSIBLE_HOST="${ANSIBLE_HOST}" \
+            -e ANSIBLE_PRIVATE_KEY_FILE=/tmp/id_ed25519 \
+            ghcr.io/ansible/creator-ee:latest \
+            ansible-playbook -i inventory.yaml site.yml -vv
