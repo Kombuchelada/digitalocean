@@ -17,6 +17,13 @@
 
     - name: Reset Connection after volume mount
       meta: reset_connection
+      
+    - name: Wait for SSH to be available after mount
+      ansible.builtin.wait_for:
+        host: "{{ inventory_hostname }}"
+        port: 22
+        delay: 2
+        timeout: 60
 
     - name: Include Docker installation
       ansible.builtin.include_tasks: docker.yml
