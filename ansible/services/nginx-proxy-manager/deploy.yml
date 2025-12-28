@@ -1,39 +1,29 @@
 ---
-- name: Deploy Nginx Proxy Manager
-  hosts: proxy_host
-  become: true
-  vars:
-    mount_path: /mnt/docker-data
-    services_dir: "{{ mount_path }}/services"
-    npm_dirs:
-      - "{{ services_dir }}/npm/data"
-      - "{{ services_dir }}/npm/letsencrypt"
-  tasks:
-    - name: Create docker-compose.yml for nginx proxy manager
-      ansible.builtin.copy:
-        src: docker-compose.yml
-        dest: "{{ mount_path }}/docker-compose.yml"
-        owner: root
-        group: root
-        mode: '0644'
+- name: Create docker-compose.yml for nginx proxy manager
+  ansible.builtin.copy:
+    src: docker-compose.yml
+    dest: "{{ mount_path }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0644'
 
-    - name: Create docker-compose file in services directory
-      ansible.builtin.file:
-        path: "{{ services_dir }}/docker-compose.yml"
-        src: "{{ mount_path }}/docker-compose.yml"
-        state: link
-        force: true
+- name: Create docker-compose file in services directory
+  ansible.builtin.file:
+    path: "{{ services_dir }}/docker-compose.yml"
+    src: "{{ mount_path }}/docker-compose.yml"
+    state: link
+    force: true
 
-    - name: Start nginx proxy manager via docker-compose
-      community.docker.docker_compose_v2:
-        project_src: "{{ mount_path }}"
-        state: present
-      register: npm_output
+- name: Start nginx proxy manager via docker-compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ mount_path }}"
+    state: present
+  register: npm_output
 
-    - name: Show npm deployment status
-      ansible.builtin.debug:
-        msg:
-          - "Nginx Proxy Manager is running"
-          - "Access at: http://{{ ansible_host }}:81"
-          - "Default credentials: admin@example.com / changeme"
-          - "Data persisted at: {{ npm_dirs }}"
+- name: Show npm deployment status
+  ansible.builtin.debug:
+    msg:
+      - "Nginx Proxy Manager is running"
+      - "Access at: http://{{ ansible_host }}:81"
+      - "Default credentials: admin@example.com / changeme"
+      - "Data persisted at: {{ npm_dirs }}"
