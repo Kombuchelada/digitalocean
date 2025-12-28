@@ -11,4 +11,4 @@ resource "digitalocean_droplet" "www-1" {
     private_key = file(var.pvt_key)
     timeout     = "2m"
   }
-
+}
