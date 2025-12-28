@@ -11,13 +11,4 @@ resource "digitalocean_droplet" "www-1" {
     private_key = file(var.pvt_key)
     timeout     = "2m"
   }
-  provisioner "remote-exec" {
-    inline = [
-      "export PATH=$PATH:/usr/bin",
-      # install nginx
-      "sudo apt update",
-      "sudo apt install -y nginx"
-    ]
-  }
-}
 
