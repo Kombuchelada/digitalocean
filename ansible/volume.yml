@@ -44,8 +44,18 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
+    owner: "{{ npm_uid }}"
+    group: "{{ npm_gid }}"
     mode: "0755"
   loop: "{{ npm_dirs }}"
+
+- name: Create nginx proxy manager database directory
+  ansible.builtin.file:
+    path: "{{ npm_db_dir }}"
+    state: directory
+    owner: "{{ mariadb_uid }}"
+    group: "{{ mariadb_gid }}"
+    mode: "0750"
 
 - name: Show resulting mount and layout
   ansible.builtin.command: df -h "{{ mount_path }}"

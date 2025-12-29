@@ -11,6 +11,11 @@
     npm_dirs:
       - "{{ services_dir }}/npm/data"
       - "{{ services_dir }}/npm/letsencrypt"
+    npm_db_dir: "{{ services_dir }}/npm/db"
+    npm_uid: 1000
+    npm_gid: 1000
+    mariadb_uid: 999
+    mariadb_gid: 999
   tasks:
     - name: Include volume setup
       ansible.builtin.include_tasks: volume.yml

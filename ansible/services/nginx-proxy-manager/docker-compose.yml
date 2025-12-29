@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   app:
     image: 'jc21/nginx-proxy-manager:latest'
@@ -15,8 +14,8 @@ services:
       DB_MYSQL_NAME: 'npm'
       DISABLE_IPV6: 'true'
     volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
+      - /mnt/docker-data/services/npm/data:/data
+      - /mnt/docker-data/services/npm/letsencrypt:/etc/letsencrypt
     depends_on:
       - db
   db:
@@ -29,8 +28,4 @@ services:
       MYSQL_PASSWORD: 'npm'
       MARIADB_AUTO_UPGRADE: '1'
     volumes:
-      - ./db:/var/lib/mysql
-volumes:
-  data: {}
-  letsencrypt: {}
-  db: {}
+      - /mnt/docker-data/services/npm/db:/var/lib/mysql
