@@ -90,6 +90,9 @@ jobs:
           chmod 600 "$HOME/.ssh/id_ed25519"
           echo "ANSIBLE_PRIVATE_KEY_FILE=$HOME/.ssh/id_ed25519" >> $GITHUB_ENV
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Run Ansible playbook via Execution Environment
         working-directory: ansible
         env:
