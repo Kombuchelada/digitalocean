@@ -102,4 +102,4 @@ jobs:
             -e ANSIBLE_HOST="${ANSIBLE_HOST}" \
             -e ANSIBLE_PRIVATE_KEY_FILE=/tmp/id_ed25519 \
             ghcr.io/ansible/creator-ee:latest \
-            ansible-playbook -i inventory.yaml site.yml -vv
+            /bin/bash -lc "ansible-galaxy collection install -r requirements.yml && ansible-playbook -i inventory.yaml site.yml -vv"

@@ -69,6 +69,7 @@ Key resources:
 Run from [ansible](ansible):
 ```bash
 cd ansible
+ansible-galaxy collection install -r requirements.yml
 ansible-playbook site.yml
 ```
 What it does:
