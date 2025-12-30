@@ -232,13 +232,13 @@
     name: php8.3-fpm
     enabled: true
     state: started
+
+- name: Show pelican deployment status
+  ansible.builtin.debug:
+    msg:
+      - "Pelican Panel installed successfully!"
+      - "Access at: http://{{ ansible_host }}"
       - "Default credentials: admin@example.com / changeme"
       - "IMPORTANT: Change the admin password immediately!"
       - "Panel location: /var/www/pelican"
       - "Queue worker running as systemd service: pelican-worker"
-
-handlers:
-  - name: restart pelican worker
-    ansible.builtin.systemd:
-      name: pelican-worker
-      state: restarted
