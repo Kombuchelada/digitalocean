@@ -10,17 +10,28 @@
 
 - name: Restart nginx proxy manager if compose file changed
   block:
-    - name: Stop nginx proxy manager
+    - name: Stop nginx proxy manager completely
       community.docker.docker_compose_v2:
         project_src: "{{ npm_mount_path }}"
         state: absent
-      when: npm_compose.changed
+
+    - name: Wait for containers to fully stop
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Remove database lock files if they exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /mnt/docker-data/services/npm/db/aria_log_control
+        - /mnt/docker-data/services/npm/db/aria_log.00000001
+      ignore_errors: true
 
     - name: Start nginx proxy manager via docker-compose
       community.docker.docker_compose_v2:
         project_src: "{{ npm_mount_path }}"
         state: present
-      when: npm_compose.changed
   when: npm_compose.changed
 
 - name: Ensure nginx proxy manager is running
