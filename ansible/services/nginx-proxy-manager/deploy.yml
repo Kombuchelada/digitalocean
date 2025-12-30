@@ -9,15 +9,25 @@
   register: npm_compose
 
 - name: Restart nginx proxy manager if compose file changed
-  community.docker.docker_compose_v2:
-    project_src: "{{ npm_mount_path }}"
-    state: restarted
+  block:
+    - name: Stop nginx proxy manager
+      community.docker.docker_compose_v2:
+        project_src: "{{ npm_mount_path }}"
+        state: absent
+      when: npm_compose.changed
+
+    - name: Start nginx proxy manager via docker-compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ npm_mount_path }}"
+        state: present
+      when: npm_compose.changed
   when: npm_compose.changed
 
-- name: Start nginx proxy manager via docker-compose
+- name: Ensure nginx proxy manager is running
   community.docker.docker_compose_v2:
     project_src: "{{ npm_mount_path }}"
     state: present
+  when: not npm_compose.changed
   register: npm_output
 
 - name: Show npm deployment status
