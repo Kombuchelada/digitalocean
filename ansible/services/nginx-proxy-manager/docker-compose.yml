@@ -17,17 +17,10 @@ services:
       - /mnt/docker-data/services/npm/data:/data
       - /mnt/docker-data/services/npm/letsencrypt:/etc/letsencrypt
     depends_on:
-      db:
-        condition: service_healthy
+      - db
   db:
     image: 'jc21/mariadb-aria:latest'
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pnpm"]
-      start_period: 20s
-      interval: 10s
-      timeout: 5s
-      retries: 5
     environment:
       MYSQL_ROOT_PASSWORD: 'npm'
       MYSQL_DATABASE: 'npm'
