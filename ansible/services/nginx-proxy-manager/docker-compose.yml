@@ -2,12 +2,9 @@ services:
   app:
     image: 'jc21/nginx-proxy-manager:latest'
     restart: unless-stopped
-    ports:
-      - '80:80'
-      - '81:81'
-      - '443:443'
+    network_mode: host
     environment:
-      DB_MYSQL_HOST: 'db'
+      DB_MYSQL_HOST: '127.0.0.1'
       DB_MYSQL_PORT: 3306
       DB_MYSQL_USER: 'npm'
       DB_MYSQL_PASSWORD: 'npm'
@@ -21,6 +18,8 @@ services:
   db:
     image: 'jc21/mariadb-aria:latest'
     restart: unless-stopped
+    ports:
+      - '127.0.0.1:3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: 'npm'
       MYSQL_DATABASE: 'npm'

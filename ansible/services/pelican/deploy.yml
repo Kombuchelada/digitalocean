@@ -298,7 +298,8 @@
   ansible.builtin.debug:
     msg:
       - "Pelican Panel installed successfully!"
-      - "Access at: http://{{ ansible_host }}"
+      - "Nginx serving on all interfaces port 8080"
+      - "Configure NPM to proxy http://{{ ansible_default_ipv4.address }}:8080"
       - "Default credentials: admin@example.com / changeme"
       - "IMPORTANT: Change the admin password immediately!"
       - "Panel location: /var/www/pelican"
