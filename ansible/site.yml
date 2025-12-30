@@ -24,6 +24,7 @@
       - "{{ services_dir }}/pelican/certs"
       - "{{ services_dir }}/pelican/logs"
     pelican_db_dir: "{{ services_dir }}/pelican/db"
+    stashapp_mount_path: "{{ mount_path }}/stashapp"
   tasks:
     - name: Include volume setup
       ansible.builtin.include_tasks: volume.yml
@@ -35,3 +36,6 @@
 
     - name: Include Pelican Game Server deployment
       ansible.builtin.include_tasks: services/pelican/deploy.yml
+
+    - name: Include Stashapp deployment
+      ansible.builtin.include_tasks: services/stashapp/deploy.yml
