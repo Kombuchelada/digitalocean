@@ -23,11 +23,11 @@ services:
     image: 'jc21/mariadb-aria:latest'
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      start_period: 10s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pnpm"]
+      start_period: 20s
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
     environment:
       MYSQL_ROOT_PASSWORD: 'npm'
       MYSQL_DATABASE: 'npm'
