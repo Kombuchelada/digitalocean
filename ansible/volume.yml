@@ -40,6 +40,12 @@
     - "{{ docker_dir }}"
     - "{{ services_dir }}"
 
+- name: Create npm mount directory
+  ansible.builtin.file:
+    path: "{{ npm_mount_path }}"
+    state: directory
+    mode: "0755"
+
 - name: Create nginx proxy manager data directories
   ansible.builtin.file:
     path: "{{ item }}"

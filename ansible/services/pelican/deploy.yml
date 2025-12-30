@@ -239,8 +239,7 @@
   ansible.builtin.copy:
     dest: /etc/nginx/sites-available/pelican
     content: |
-      serNginx serving on localhost:8080"
-      - "Configure NPM to proxy http://127.0.0.1:8080 (not https)
+      server {
           listen 127.0.0.1:8080;
           server_name _;
           root /var/www/pelican/public;

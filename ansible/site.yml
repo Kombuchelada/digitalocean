@@ -8,6 +8,7 @@
     legacy_mount_path: /mnt/docker_data_volume
     docker_dir: "{{ mount_path }}/docker"
     services_dir: "{{ mount_path }}/services"
+    npm_mount_path: "{{ mount_path }}/npm"
     npm_dirs:
       - "{{ services_dir }}/npm/data"
       - "{{ services_dir }}/npm/letsencrypt"
