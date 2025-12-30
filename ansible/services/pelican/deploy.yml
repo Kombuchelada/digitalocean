@@ -208,26 +208,30 @@
       [Install]
       WantedBy=multi-user.target
     mode: '0644'
-  notify: restart pelican worker
+  register: worker_service
+
+- name: Reload systemd daemon if service changed
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: worker_service.changed
 
 - name: Enable and start Pelican queue worker
   ansible.builtin.systemd:
     name: pelican-worker
     enabled: true
     state: started
-    daemon_reload: true
+
+- name: Restart worker if service definition changed
+  ansible.builtin.systemd:
+    name: pelican-worker
+    state: restarted
+  when: worker_service.changed
 
 - name: Start PHP-FPM service
   ansible.builtin.systemd:
     name: php8.3-fpm
     enabled: true
     state: started
-
-- name: Show pelican deployment status
-  ansible.builtin.debug:
-    msg:
-      - "Pelican Panel installed successfully!"
-      - "Access at: http://{{ ansible_host }}"
       - "Default credentials: admin@example.com / changeme"
       - "IMPORTANT: Change the admin password immediately!"
       - "Panel location: /var/www/pelican"
