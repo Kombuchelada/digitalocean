@@ -16,6 +16,13 @@
     npm_gid: 1000
     mariadb_uid: 999
     mariadb_gid: 999
+    pelican_mount_path: "{{ mount_path }}/pelican"
+    pelican_dirs:
+      - "{{ services_dir }}/pelican/var"
+      - "{{ services_dir }}/pelican/nginx"
+      - "{{ services_dir }}/pelican/certs"
+      - "{{ services_dir }}/pelican/logs"
+    pelican_db_dir: "{{ services_dir }}/pelican/db"
   tasks:
     - name: Include volume setup
       ansible.builtin.include_tasks: volume.yml
@@ -24,3 +31,6 @@
 
     - name: Include Nginx Proxy Manager deployment
       ansible.builtin.include_tasks: services/nginx-proxy-manager/deploy.yml
+
+    - name: Include Pelican Game Server deployment
+      ansible.builtin.include_tasks: services/pelican/deploy.yml

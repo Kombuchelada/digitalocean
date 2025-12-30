@@ -1,0 +1,240 @@
+---
+- name: Install Pelican dependencies
+  ansible.builtin.apt:
+    name:
+      - software-properties-common
+      - curl
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - certbot
+      - tar
+      - unzip
+      - git
+      - redis-tools
+    state: present
+    update_cache: true
+
+- name: Add PHP repository
+  ansible.builtin.apt_repository:
+    repo: ppa:ondrej/php
+    state: present
+
+- name: Install PHP 8.3 and extensions
+  ansible.builtin.apt:
+    name:
+      - php8.3
+      - php8.3-cli
+      - php8.3-gd
+      - php8.3-mysql
+      - php8.3-pdo
+      - php8.3-mbstring
+      - php8.3-tokenizer
+      - php8.3-bcmath
+      - php8.3-xml
+      - php8.3-fpm
+      - php8.3-curl
+      - php8.3-zip
+      - php8.3-intl
+      - php8.3-redis
+    state: present
+    update_cache: true
+
+- name: Create docker-compose.yml for pelican database
+  ansible.builtin.copy:
+    src: docker-compose.yml
+    dest: "{{ pelican_mount_path }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Start pelican database and redis via docker-compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ pelican_mount_path }}"
+    state: present
+
+- name: Download Composer installer
+  ansible.builtin.get_url:
+    url: https://getcomposer.org/installer
+    dest: /tmp/composer-setup.php
+    mode: '0755'
+
+- name: Install Composer globally
+  ansible.builtin.command: php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+  args:
+    creates: /usr/local/bin/composer
+
+- name: Create pelican web directory
+  ansible.builtin.file:
+    path: /var/www/pelican
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Check if Pelican is already installed
+  ansible.builtin.stat:
+    path: /var/www/pelican/composer.json
+  register: pelican_installed
+
+- name: Download and install Pelican panel
+  when: not pelican_installed.stat.exists
+  block:
+    - name: Download Pelican panel
+      ansible.builtin.get_url:
+        url: https://github.com/pelican-dev/panel/releases/latest/download/panel.tar.gz
+        dest: /tmp/panel.tar.gz
+        mode: '0644'
+
+    - name: Extract Pelican panel
+      ansible.builtin.unarchive:
+        src: /tmp/panel.tar.gz
+        dest: /var/www/pelican
+        remote_src: true
+        owner: www-data
+        group: www-data
+
+    - name: Set correct permissions on storage and cache
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+        recurse: true
+      loop:
+        - /var/www/pelican/storage
+        - /var/www/pelican/bootstrap/cache
+
+    - name: Install Composer dependencies
+      become_user: www-data
+      ansible.builtin.command: composer install --no-dev --optimize-autoloader
+      args:
+        chdir: /var/www/pelican
+        creates: /var/www/pelican/vendor/autoload.php
+
+- name: Check if .env file exists
+  ansible.builtin.stat:
+    path: /var/www/pelican/.env
+  register: pelican_env
+
+- name: Configure Pelican environment
+  when: not pelican_env.stat.exists
+  block:
+    - name: Copy .env.example to .env
+      ansible.builtin.copy:
+        src: /var/www/pelican/.env.example
+        dest: /var/www/pelican/.env
+        owner: www-data
+        group: www-data
+        mode: '0640'
+        remote_src: true
+
+    - name: Generate application key
+      become_user: www-data
+      ansible.builtin.command: php artisan key:generate --force
+      args:
+        chdir: /var/www/pelican
+
+    - name: Configure database in .env
+      ansible.builtin.lineinfile:
+        path: /var/www/pelican/.env
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        owner: www-data
+        group: www-data
+        mode: '0640'
+      loop:
+        - { regexp: '^DB_HOST=', line: 'DB_HOST=127.0.0.1' }
+        - { regexp: '^DB_PORT=', line: 'DB_PORT=3306' }
+        - { regexp: '^DB_DATABASE=', line: 'DB_DATABASE=panel' }
+        - { regexp: '^DB_USERNAME=', line: 'DB_USERNAME=pelican' }
+        - { regexp: '^DB_PASSWORD=', line: 'DB_PASSWORD=pelican' }
+        - { regexp: '^REDIS_HOST=', line: 'REDIS_HOST=127.0.0.1' }
+        - { regexp: '^REDIS_PORT=', line: 'REDIS_PORT=6379' }
+        - { regexp: '^CACHE_DRIVER=', line: 'CACHE_DRIVER=redis' }
+        - { regexp: '^SESSION_DRIVER=', line: 'SESSION_DRIVER=redis' }
+        - { regexp: '^QUEUE_CONNECTION=', line: 'QUEUE_CONNECTION=redis' }
+        - { regexp: '^APP_URL=', line: 'APP_URL=http://{{ ansible_host }}' }
+
+    - name: Wait for database to be ready
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 3306
+        delay: 5
+        timeout: 60
+
+    - name: Run database migrations
+      become_user: www-data
+      ansible.builtin.command: php artisan migrate --seed --force
+      args:
+        chdir: /var/www/pelican
+      register: migrate_result
+      changed_when: "'Migrating' in migrate_result.stdout"
+
+    - name: Create admin user
+      become_user: www-data
+      ansible.builtin.shell: |
+        php artisan p:user:make \
+          --email=admin@example.com \
+          --username=admin \
+          --name-first=Admin \
+          --name-last=User \
+          --password=changeme \
+          --admin=1
+      args:
+        chdir: /var/www/pelican
+      register: user_create
+      failed_when: user_create.rc != 0 and 'already exists' not in user_create.stderr
+      changed_when: user_create.rc == 0
+
+- name: Create systemd service for Pelican queue worker
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/pelican-worker.service
+    content: |
+      [Unit]
+      Description=Pelican Queue Worker
+      After=redis.service
+
+      [Service]
+      User=www-data
+      Group=www-data
+      Restart=always
+      ExecStart=/usr/bin/php /var/www/pelican/artisan queue:work --queue=high,standard,low --sleep=3 --tries=3
+      StartLimitInterval=180
+      StartLimitBurst=30
+      RestartSec=5s
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: '0644'
+  notify: restart pelican worker
+
+- name: Enable and start Pelican queue worker
+  ansible.builtin.systemd:
+    name: pelican-worker
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Start PHP-FPM service
+  ansible.builtin.systemd:
+    name: php8.3-fpm
+    enabled: true
+    state: started
+
+- name: Show pelican deployment status
+  ansible.builtin.debug:
+    msg:
+      - "Pelican Panel installed successfully!"
+      - "Access at: http://{{ ansible_host }}"
+      - "Default credentials: admin@example.com / changeme"
+      - "IMPORTANT: Change the admin password immediately!"
+      - "Panel location: /var/www/pelican"
+      - "Queue worker running as systemd service: pelican-worker"
+
+handlers:
+  - name: restart pelican worker
+    ansible.builtin.systemd:
+      name: pelican-worker
+      state: restarted

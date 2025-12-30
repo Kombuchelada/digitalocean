@@ -57,6 +57,27 @@
     group: "{{ mariadb_gid }}"
     mode: "0750"
 
+- name: Create pelican data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ pelican_dirs }}"
+
+- name: Create pelican database directory
+  ansible.builtin.file:
+    path: "{{ pelican_db_dir }}"
+    state: directory
+    owner: "{{ mariadb_uid }}"
+    group: "{{ mariadb_gid }}"
+    mode: "0750"
+
+- name: Create pelican mount directory
+  ansible.builtin.file:
+    path: "{{ pelican_mount_path }}"
+    state: directory
+    mode: "0755"
+
 - name: Show resulting mount and layout
   ansible.builtin.command: df -h "{{ mount_path }}"
   register: mount_df
