@@ -240,7 +240,7 @@
     dest: /etc/nginx/sites-available/pelican
     content: |
       server {
-          listen 127.0.0.1:8080;
+          listen 8080;
           server_name _;
           root /var/www/pelican/public;
           index index.php;
