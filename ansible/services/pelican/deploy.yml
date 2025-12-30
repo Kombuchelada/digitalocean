@@ -107,12 +107,12 @@
         - /var/www/pelican/storage
         - /var/www/pelican/bootstrap/cache
 
-    - name: Install Composer dependencies
-      become_user: www-data
-      ansible.builtin.command: composer install --no-dev --optimize-autoloader
-      args:
-        chdir: /var/www/pelican
-        creates: /var/www/pelican/vendor/autoload.php
+- name: Install Composer dependencies
+  become_user: www-data
+  ansible.builtin.command: composer install --no-dev --optimize-autoloader
+  args:
+    chdir: /var/www/pelican
+    creates: /var/www/pelican/vendor/autoload.php
 
 - name: Check if .env file exists
   ansible.builtin.stat:
