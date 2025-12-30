@@ -37,6 +37,7 @@
       - php8.3-zip
       - php8.3-intl
       - php8.3-redis
+      - php8.3-sqlite3
     state: present
     update_cache: true
 
