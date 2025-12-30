@@ -1,0 +1,55 @@
+---
+- name: Create stashapp directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ stashapp_mount_path }}"
+    - /mnt/docker-data/services/stashapp/config
+    - /mnt/docker-data/services/stashapp/data
+    - /mnt/docker-data/services/stashapp/generated
+    - /mnt/docker-data/services/stashapp/metadata
+    - /mnt/docker-data/services/stashapp/cache
+
+- name: Create docker-compose.yml for stashapp
+  ansible.builtin.copy:
+    src: docker-compose.yml
+    dest: "{{ stashapp_mount_path }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  register: stashapp_compose
+
+- name: Restart stashapp if compose file changed
+  block:
+    - name: Stop stashapp completely
+      community.docker.docker_compose_v2:
+        project_src: "{{ stashapp_mount_path }}"
+        state: absent
+
+    - name: Wait for containers to fully stop
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Start stashapp via docker-compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ stashapp_mount_path }}"
+        state: present
+  when: stashapp_compose.changed
+
+- name: Ensure stashapp is running
+  community.docker.docker_compose_v2:
+    project_src: "{{ stashapp_mount_path }}"
+    state: present
+  when: not stashapp_compose.changed
+  register: stashapp_output
+
+- name: Show stashapp deployment status
+  ansible.builtin.debug:
+    msg:
+      - "Stashapp is running"
+      - "Access at: http://{{ ansible_host }}:9999"
+      - "Data persisted at: /mnt/docker-data/services/stashapp/"
