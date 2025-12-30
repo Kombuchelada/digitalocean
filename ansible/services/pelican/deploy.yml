@@ -12,6 +12,7 @@
       - unzip
       - git
       - redis-tools
+      - nginx
     state: present
     update_cache: true
 
@@ -233,6 +234,66 @@
     name: php8.3-fpm
     enabled: true
     state: started
+
+- name: Create nginx configuration for Pelican
+  ansible.builtin.copy:
+    dest: /etc/nginx/sites-available/pelican
+    content: |
+      serNginx serving on localhost:8080"
+      - "Configure NPM to proxy http://127.0.0.1:8080 (not https)
+          listen 127.0.0.1:8080;
+          server_name _;
+          root /var/www/pelican/public;
+          index index.php;
+
+          client_max_body_size 100M;
+
+          location / {
+              try_files $uri $uri/ /index.php?$query_string;
+          }
+
+          location ~ \.php$ {
+              fastcgi_split_path_info ^(.+\.php)(/.+)$;
+              fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+              fastcgi_index index.php;
+              include fastcgi_params;
+              fastcgi_param PHP_VALUE "upload_max_filesize = 100M \n post_max_size=100M";
+              fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+              fastcgi_param HTTP_PROXY "";
+              fastcgi_intercept_errors off;
+              fastcgi_buffer_size 16k;
+              fastcgi_buffers 4 16k;
+              fastcgi_connect_timeout 300;
+              fastcgi_send_timeout 300;
+              fastcgi_read_timeout 300;
+          }
+
+          location ~ /\.ht {
+              deny all;
+          }
+      }
+    mode: '0644'
+
+- name: Enable Pelican nginx site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/pelican
+    dest: /etc/nginx/sites-enabled/pelican
+    state: link
+
+- name: Remove default nginx site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Test nginx configuration
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Restart nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: true
+    state: restarted
 
 - name: Show pelican deployment status
   ansible.builtin.debug:
