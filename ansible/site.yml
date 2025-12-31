@@ -27,6 +27,10 @@
     stashapp_mount_path: "{{ mount_path }}/stashapp"
     domain: "{{ lookup('env', 'DOMAIN') }}"
   tasks:
+    - name: Debug domain variable
+      ansible.builtin.debug:
+        msg: "Domain is set to: {{ domain }}"
+
     - name: Include volume setup
       ansible.builtin.include_tasks: volume.yml
     - name: Include Docker installation
