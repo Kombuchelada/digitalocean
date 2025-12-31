@@ -76,6 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANSIBLE_HOST: ${{ needs.terraform.outputs.droplet_ip }}
+      DOMAIN: ${{ secrets.DOMAIN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -103,6 +104,7 @@ jobs:
             -v "$HOME/.ssh/id_ed25519:/tmp/id_ed25519:ro" \
             -w /work \
             -e ANSIBLE_HOST="${ANSIBLE_HOST}" \
+            -e DOMAIN="${DOMAIN}" \
             -e ANSIBLE_PRIVATE_KEY_FILE=/tmp/id_ed25519 \
             ghcr.io/ansible/creator-ee:latest \
             /bin/bash -lc "ansible-galaxy collection install -r requirements.yml && ansible-playbook -i inventory.yaml site.yml -vv"
