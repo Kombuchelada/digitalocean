@@ -44,4 +44,3 @@
     name: services_network
     driver: bridge
     state: present
-    daemon_reload: true
