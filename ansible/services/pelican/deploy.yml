@@ -48,7 +48,7 @@
     dest: "{{ pelican_mount_path }}/docker-compose.yml"
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
 
 - name: Start pelican database and redis via docker-compose
   community.docker.docker_compose_v2:
@@ -59,7 +59,7 @@
   ansible.builtin.get_url:
     url: https://getcomposer.org/installer
     dest: /tmp/composer-setup.php
-    mode: '0755'
+    mode: "0755"
 
 - name: Install Composer globally
   ansible.builtin.command: php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
@@ -72,7 +72,7 @@
     state: directory
     owner: www-data
     group: www-data
-    mode: '0755'
+    mode: "0755"
 
 - name: Check if Pelican is already installed
   ansible.builtin.stat:
@@ -86,7 +86,7 @@
       ansible.builtin.get_url:
         url: https://github.com/pelican-dev/panel/releases/latest/download/panel.tar.gz
         dest: /tmp/panel.tar.gz
-        mode: '0644'
+        mode: "0644"
 
     - name: Extract Pelican panel
       ansible.builtin.unarchive:
@@ -102,7 +102,7 @@
         state: directory
         owner: www-data
         group: www-data
-        mode: '0755'
+        mode: "0755"
         recurse: true
       loop:
         - /var/www/pelican/storage
@@ -129,7 +129,7 @@
         dest: /var/www/pelican/.env
         owner: www-data
         group: www-data
-        mode: '0640'
+        mode: "0640"
         remote_src: true
 
     - name: Generate application key
@@ -145,19 +145,20 @@
         line: "{{ item.line }}"
         owner: www-data
         group: www-data
-        mode: '0640'
+        mode: "0640"
       loop:
-        - { regexp: '^DB_HOST=', line: 'DB_HOST=127.0.0.1' }
-        - { regexp: '^DB_PORT=', line: 'DB_PORT=3306' }
-        - { regexp: '^DB_DATABASE=', line: 'DB_DATABASE=panel' }
-        - { regexp: '^DB_USERNAME=', line: 'DB_USERNAME=pelican' }
-        - { regexp: '^DB_PASSWORD=', line: 'DB_PASSWORD=pelican' }
-        - { regexp: '^REDIS_HOST=', line: 'REDIS_HOST=127.0.0.1' }
-        - { regexp: '^REDIS_PORT=', line: 'REDIS_PORT=6379' }
-        - { regexp: '^CACHE_DRIVER=', line: 'CACHE_DRIVER=redis' }
-        - { regexp: '^SESSION_DRIVER=', line: 'SESSION_DRIVER=redis' }
-        - { regexp: '^QUEUE_CONNECTION=', line: 'QUEUE_CONNECTION=redis' }
-        - { regexp: '^APP_URL=', line: 'APP_URL=http://{{ ansible_host }}' }
+        - { regexp: "^DB_CONNECTION=", line: "DB_CONNECTION=mysql" }
+        - { regexp: "^DB_HOST=", line: "DB_HOST=127.0.0.1" }
+        - { regexp: "^DB_PORT=", line: "DB_PORT=3306" }
+        - { regexp: "^DB_DATABASE=", line: "DB_DATABASE=panel" }
+        - { regexp: "^DB_USERNAME=", line: "DB_USERNAME=pelican" }
+        - { regexp: "^DB_PASSWORD=", line: "DB_PASSWORD=pelican" }
+        - { regexp: "^REDIS_HOST=", line: "REDIS_HOST=127.0.0.1" }
+        - { regexp: "^REDIS_PORT=", line: "REDIS_PORT=6379" }
+        - { regexp: "^CACHE_DRIVER=", line: "CACHE_DRIVER=redis" }
+        - { regexp: "^SESSION_DRIVER=", line: "SESSION_DRIVER=redis" }
+        - { regexp: "^QUEUE_CONNECTION=", line: "QUEUE_CONNECTION=redis" }
+        - { regexp: "^APP_URL=", line: "APP_URL=http://{{ ansible_host }}" }
 
     - name: Wait for database to be ready
       ansible.builtin.wait_for:
@@ -209,7 +210,7 @@
 
       [Install]
       WantedBy=multi-user.target
-    mode: '0644'
+    mode: "0644"
   register: worker_service
 
 - name: Reload systemd daemon if service changed
@@ -271,7 +272,7 @@
               deny all;
           }
       }
-    mode: '0644'
+    mode: "0644"
 
 - name: Enable Pelican nginx site
   ansible.builtin.file:
