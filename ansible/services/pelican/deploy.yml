@@ -338,3 +338,96 @@
       - "IMPORTANT: Change the admin password immediately!"
       - "Panel location: /var/www/pelican"
       - "Queue worker running as systemd service: pelican-worker"
+
+# Wings Daemon Installation
+- name: Create Wings user
+  ansible.builtin.user:
+    name: wings
+    shell: /bin/bash
+    home: /home/wings
+    createhome: true
+    state: present
+
+- name: Create Wings directory structure on volume
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: wings
+    group: wings
+    mode: "0755"
+  loop:
+    - "{{ pelican_mount_path }}/wings"
+    - "{{ pelican_mount_path }}/wings/logs"
+
+- name: Create Wings data directory on persistent volume
+  ansible.builtin.file:
+    path: "{{ pelican_mount_path }}/volumes"
+    state: directory
+    owner: wings
+    group: wings
+    mode: "0755"
+
+- name: Copy Wings config.yml from environment variable
+  ansible.builtin.copy:
+    dest: "{{ pelican_mount_path }}/wings/config.yml"
+    owner: wings
+    group: wings
+    mode: "0640"
+    content: "{{ lookup('env', 'WINGS_CONFIG') }}"
+
+- name: Download Wings binary
+  ansible.builtin.get_url:
+    url: https://github.com/pelican-dev/wings/releases/latest/download/wings_linux_amd64
+    dest: /usr/local/bin/wings
+    mode: "0755"
+    owner: root
+    group: root
+
+- name: Create Wings systemd service
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/wings.service
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Unit]
+      Description=Pelican Wings Daemon
+      After=docker.service
+      Wants=docker.service
+
+      [Service]
+      User=wings
+      WorkingDirectory=/home/wings
+      ExecStart=/usr/local/bin/wings --config={{ pelican_mount_path }}/wings/config.yml
+      Restart=always
+      RestartSec=5s
+      StartLimitInterval=600
+      StartLimitBurst=3
+
+      StandardOutput=journal
+      StandardError=journal
+      SyslogIdentifier=wings
+
+      [Install]
+      WantedBy=multi-user.target
+  register: wings_service
+
+- name: Reload systemd daemon for Wings
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: wings_service.changed
+
+- name: Enable and start Wings service
+  ansible.builtin.systemd:
+    name: wings
+    enabled: true
+    state: started
+
+- name: Show Wings deployment status
+  ansible.builtin.debug:
+    msg:
+      - "Wings daemon installed successfully!"
+      - "Config location: {{ pelican_mount_path }}/wings/config.yml"
+      - "Wings listening on port 8081"
+      - "Systemd service: wings"
+      - "View logs: journalctl -u wings -f"
