@@ -17,7 +17,7 @@
     npm_gid: 1000
     mariadb_uid: 999
     mariadb_gid: 999
-    pelican_mount_path: "{{ mount_path }}/pelican"
+    pelican_mount_path: "{{ services_dir }}/pelican"
     pelican_dirs:
       - "{{ services_dir }}/pelican/var"
       - "{{ services_dir }}/pelican/nginx"
