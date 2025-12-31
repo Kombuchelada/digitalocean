@@ -15,3 +15,8 @@ services:
       - /mnt/docker-data/services/stashapp/generated:/generated
       - /mnt/docker-data/services/stashapp/metadata:/metadata
       - /mnt/docker-data/services/stashapp/cache:/cache
+
+networks:
+  default:
+    name: services_network
+    external: true

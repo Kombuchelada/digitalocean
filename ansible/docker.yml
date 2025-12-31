@@ -38,4 +38,10 @@
     name: docker
     state: started
     enabled: true
+
+- name: Create external Docker network for services
+  community.docker.docker_network:
+    name: services_network
+    driver: bridge
+    state: present
     daemon_reload: true
