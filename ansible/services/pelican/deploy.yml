@@ -158,7 +158,10 @@
         - { regexp: "^CACHE_DRIVER=", line: "CACHE_DRIVER=redis" }
         - { regexp: "^SESSION_DRIVER=", line: "SESSION_DRIVER=redis" }
         - { regexp: "^QUEUE_CONNECTION=", line: "QUEUE_CONNECTION=redis" }
-        - { regexp: "^APP_URL=", line: "APP_URL=http://{{ ansible_host }}" }
+        - {
+            regexp: "^APP_URL=",
+            line: "APP_URL=https://pelican.{{ lookup('env', 'DOMAIN') }}",
+          }
 
     - name: Wait for database to be ready
       ansible.builtin.wait_for:
@@ -181,8 +184,6 @@
         php artisan p:user:make \
           --email=admin@example.com \
           --username=admin \
-          --name-first=Admin \
-          --name-last=User \
           --password=changeme \
           --admin=1
       args:
@@ -211,7 +212,23 @@
     - { regexp: "^CACHE_DRIVER=", line: "CACHE_DRIVER=redis" }
     - { regexp: "^SESSION_DRIVER=", line: "SESSION_DRIVER=redis" }
     - { regexp: "^QUEUE_CONNECTION=", line: "QUEUE_CONNECTION=redis" }
-    - { regexp: "^APP_URL=", line: "APP_URL=http://{{ ansible_host }}" }
+    - {
+        regexp: "^APP_URL=",
+        line: "APP_URL=https://pelican.{{ lookup('env', 'DOMAIN') }}",
+      }
+
+- name: Check if APP_KEY is set
+  ansible.builtin.shell: grep -q "^APP_KEY=base64:" /var/www/pelican/.env
+  register: app_key_check
+  failed_when: false
+  changed_when: false
+
+- name: Generate APP_KEY if missing
+  become_user: www-data
+  ansible.builtin.command: php artisan key:generate --force
+  args:
+    chdir: /var/www/pelican
+  when: app_key_check.rc != 0
 
 - name: Create systemd service for Pelican queue worker
   ansible.builtin.copy:
