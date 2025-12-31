@@ -191,6 +191,28 @@
       failed_when: user_create.rc != 0 and 'already exists' not in user_create.stderr
       changed_when: user_create.rc == 0
 
+- name: Ensure database configuration is present in .env
+  ansible.builtin.lineinfile:
+    path: /var/www/pelican/.env
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    owner: www-data
+    group: www-data
+    mode: "0640"
+  loop:
+    - { regexp: "^DB_CONNECTION=", line: "DB_CONNECTION=mysql" }
+    - { regexp: "^DB_HOST=", line: "DB_HOST=127.0.0.1" }
+    - { regexp: "^DB_PORT=", line: "DB_PORT=3306" }
+    - { regexp: "^DB_DATABASE=", line: "DB_DATABASE=panel" }
+    - { regexp: "^DB_USERNAME=", line: "DB_USERNAME=pelican" }
+    - { regexp: "^DB_PASSWORD=", line: "DB_PASSWORD=pelican" }
+    - { regexp: "^REDIS_HOST=", line: "REDIS_HOST=127.0.0.1" }
+    - { regexp: "^REDIS_PORT=", line: "REDIS_PORT=6379" }
+    - { regexp: "^CACHE_DRIVER=", line: "CACHE_DRIVER=redis" }
+    - { regexp: "^SESSION_DRIVER=", line: "SESSION_DRIVER=redis" }
+    - { regexp: "^QUEUE_CONNECTION=", line: "QUEUE_CONNECTION=redis" }
+    - { regexp: "^APP_URL=", line: "APP_URL=http://{{ ansible_host }}" }
+
 - name: Create systemd service for Pelican queue worker
   ansible.builtin.copy:
     dest: /etc/systemd/system/pelican-worker.service
