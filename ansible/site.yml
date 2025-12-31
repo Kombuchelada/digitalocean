@@ -25,6 +25,7 @@
       - "{{ services_dir }}/pelican/logs"
     pelican_db_dir: "{{ services_dir }}/pelican/db"
     stashapp_mount_path: "{{ mount_path }}/stashapp"
+    domain: "{{ lookup('env', 'DOMAIN') }}"
   tasks:
     - name: Include volume setup
       ansible.builtin.include_tasks: volume.yml

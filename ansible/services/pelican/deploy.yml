@@ -158,10 +158,7 @@
         - { regexp: "^CACHE_DRIVER=", line: "CACHE_DRIVER=redis" }
         - { regexp: "^SESSION_DRIVER=", line: "SESSION_DRIVER=redis" }
         - { regexp: "^QUEUE_CONNECTION=", line: "QUEUE_CONNECTION=redis" }
-        - {
-            regexp: "^APP_URL=",
-            line: "APP_URL=https://pelican.{{ lookup('env', 'DOMAIN') }}",
-          }
+        - { regexp: "^APP_URL=", line: "APP_URL=https://pelican.{{ domain }}" }
 
     - name: Wait for database to be ready
       ansible.builtin.wait_for:
@@ -212,10 +209,7 @@
     - { regexp: "^CACHE_DRIVER=", line: "CACHE_DRIVER=redis" }
     - { regexp: "^SESSION_DRIVER=", line: "SESSION_DRIVER=redis" }
     - { regexp: "^QUEUE_CONNECTION=", line: "QUEUE_CONNECTION=redis" }
-    - {
-        regexp: "^APP_URL=",
-        line: "APP_URL=https://pelican.{{ lookup('env', 'DOMAIN') }}",
-      }
+    - { regexp: "^APP_URL=", line: "APP_URL=https://pelican.{{ domain }}" }
 
 - name: Check if APP_KEY is set
   ansible.builtin.shell: grep -q "^APP_KEY=base64:" /var/www/pelican/.env
