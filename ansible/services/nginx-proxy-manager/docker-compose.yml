@@ -33,11 +33,11 @@ services:
     volumes:
       - /mnt/docker-data/services/npm/db:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pnpm"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 60s
 
 networks:
   default:
