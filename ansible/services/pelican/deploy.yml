@@ -132,11 +132,22 @@
         mode: "0640"
         remote_src: true
 
-    - name: Generate application key
+    - name: Set APP_KEY from environment variable
+      ansible.builtin.lineinfile:
+        path: /var/www/pelican/.env
+        regexp: "^APP_KEY="
+        line: "APP_KEY={{ lookup('env', 'PELICAN_APP_KEY') }}"
+        owner: www-data
+        group: www-data
+        mode: "0640"
+      when: lookup('env', 'PELICAN_APP_KEY') != ''
+
+    - name: Generate application key if not provided
       become_user: www-data
       ansible.builtin.command: php artisan key:generate --force
       args:
         chdir: /var/www/pelican
+      when: lookup('env', 'PELICAN_APP_KEY') == ''
 
     - name: Configure database in .env
       ansible.builtin.lineinfile:
@@ -211,18 +222,15 @@
     - { regexp: "^QUEUE_CONNECTION=", line: "QUEUE_CONNECTION=redis" }
     - { regexp: "^APP_URL=", line: "APP_URL=https://pelican.{{ domain }}" }
 
-- name: Check if APP_KEY is set
-  ansible.builtin.shell: grep -q "^APP_KEY=base64:" /var/www/pelican/.env
-  register: app_key_check
-  failed_when: false
-  changed_when: false
-
-- name: Generate APP_KEY if missing
-  become_user: www-data
-  ansible.builtin.command: php artisan key:generate --force
-  args:
-    chdir: /var/www/pelican
-  when: app_key_check.rc != 0
+- name: Ensure APP_KEY is set from environment variable if provided
+  ansible.builtin.lineinfile:
+    path: /var/www/pelican/.env
+    regexp: "^APP_KEY="
+    line: "APP_KEY={{ lookup('env', 'PELICAN_APP_KEY') }}"
+    owner: www-data
+    group: www-data
+    mode: "0640"
+  when: lookup('env', 'PELICAN_APP_KEY') != ''
 
 - name: Create systemd service for Pelican queue worker
   ansible.builtin.copy:
