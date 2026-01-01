@@ -62,7 +62,7 @@ jobs:
       - name: Terraform Apply (main only)
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         continue-on-error: true
-        run: terraform apply -input=false -auto-approve tfplan
+        run: terraform apply -input=false -auto-approve -replace="digitalocean_droplet.www-1" tfplan
 
       - name: Capture Terraform outputs
         id: outputs_step
