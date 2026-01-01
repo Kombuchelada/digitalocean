@@ -105,6 +105,7 @@ jobs:
             -w /work \
             -e ANSIBLE_HOST="${ANSIBLE_HOST}" \
             -e DOMAIN="${DOMAIN}" \
+            -e WINGS_CONFIG="${{ secrets.WINGS_CONFIG }}" \
             -e ANSIBLE_PRIVATE_KEY_FILE=/tmp/id_ed25519 \
             ghcr.io/ansible/creator-ee:latest \
             /bin/bash -lc "ansible-galaxy collection install -r requirements.yml && ansible-playbook -i inventory.yaml site.yml -vv"
