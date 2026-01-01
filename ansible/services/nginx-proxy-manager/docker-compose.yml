@@ -19,7 +19,8 @@ services:
       - /mnt/docker-data/services/npm/data:/data
       - /mnt/docker-data/services/npm/letsencrypt:/etc/letsencrypt
     depends_on:
-      - db
+      db:
+        condition: service_healthy
   db:
     image: 'jc21/mariadb-aria:latest'
     restart: unless-stopped
@@ -31,6 +32,12 @@ services:
       MARIADB_AUTO_UPGRADE: '1'
     volumes:
       - /mnt/docker-data/services/npm/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 networks:
   default:
