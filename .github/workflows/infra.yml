@@ -95,6 +95,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Write Wings config to file
+        shell: bash
+        env:
+          WINGS_CONFIG: ${{ secrets.WINGS_CONFIG }}
+        run: |
+          echo "$WINGS_CONFIG" > /tmp/wings_config.yml
+
       - name: Run Ansible playbook via Execution Environment
         working-directory: ansible
         env:
@@ -103,11 +110,12 @@ jobs:
           docker run --rm \
             -v "${{ github.workspace }}/ansible:/work" \
             -v "$HOME/.ssh/id_ed25519:/tmp/id_ed25519:ro" \
+            -v "/tmp/wings_config.yml:/tmp/wings_config.yml:ro" \
             -w /work \
             -e ANSIBLE_HOST="${ANSIBLE_HOST}" \
             -e DOMAIN="${DOMAIN}" \
             -e PELICAN_APP_KEY="${PELICAN_APP_KEY}" \
-            -e WINGS_CONFIG="${{ secrets.WINGS_CONFIG }}" \
+            -e WINGS_CONFIG="$(cat /tmp/wings_config.yml)" \
             -e ANSIBLE_PRIVATE_KEY_FILE=/tmp/id_ed25519 \
             ghcr.io/ansible/creator-ee:latest \
             /bin/bash -lc "ansible-galaxy collection install -r requirements.yml && ansible-playbook -i inventory.yaml site.yml -vv"

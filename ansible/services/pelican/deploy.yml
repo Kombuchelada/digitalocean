@@ -354,6 +354,8 @@
     shell: /bin/bash
     home: /home/wings
     createhome: true
+    groups: docker
+    append: true
     state: present
 
 - name: Create Wings directory structure on volume
@@ -375,6 +377,11 @@
     group: wings
     mode: "0755"
 
+- name: Check if Wings config already exists
+  ansible.builtin.stat:
+    path: "{{ pelican_mount_path }}/wings/config.yml"
+  register: wings_config_exists
+
 - name: Copy Wings config.yml from environment variable
   ansible.builtin.copy:
     dest: "{{ pelican_mount_path }}/wings/config.yml"
@@ -382,6 +389,14 @@
     group: wings
     mode: "0640"
     content: "{{ lookup('env', 'WINGS_CONFIG') }}"
+  when: 
+    - lookup('env', 'WINGS_CONFIG') != ''
+    - not wings_config_exists.stat.exists or wings_config_exists.stat.size == 0
+
+- name: Warn if Wings config was not updated
+  ansible.builtin.debug:
+    msg: "WARNING: WINGS_CONFIG environment variable is empty or config already exists. Skipping config update."
+  when: lookup('env', 'WINGS_CONFIG') == '' or (wings_config_exists.stat.exists and wings_config_exists.stat.size > 0)
 
 - name: Download Wings binary
   ansible.builtin.get_url:
