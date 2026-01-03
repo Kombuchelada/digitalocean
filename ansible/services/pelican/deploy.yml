@@ -368,6 +368,7 @@
   loop:
     - /var/log/pelican
     - /var/lib/pelican
+    - /etc/pelican
 
 - name: Create Wings directory structure on volume
   ansible.builtin.file:
@@ -380,6 +381,8 @@
     - "{{ pelican_mount_path }}/wings"
     - "{{ pelican_mount_path }}/wings/logs"
     - "{{ pelican_mount_path }}/wings/data"
+    - "{{ pelican_mount_path }}/wings/etc"
+    - "{{ pelican_mount_path }}/wings/lib"
 
 - name: Create Wings data directory on persistent volume
   ansible.builtin.file:
@@ -388,6 +391,19 @@
     owner: wings
     group: wings
     mode: "0755"
+
+- name: Create symlinks for Wings system directories to persistent storage
+  ansible.builtin.file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+    owner: wings
+    group: wings
+    force: true
+  loop:
+    - { src: "{{ pelican_mount_path }}/wings/logs", dest: "/var/log/pelican" }
+    - { src: "{{ pelican_mount_path }}/wings/lib", dest: "/var/lib/pelican" }
+    - { src: "{{ pelican_mount_path }}/wings/etc", dest: "/etc/pelican" }
 
 - name: Check if Wings config already exists
   ansible.builtin.stat:
@@ -401,7 +417,7 @@
     group: wings
     mode: "0640"
     content: "{{ lookup('env', 'WINGS_CONFIG') }}"
-  when: 
+  when:
     - lookup('env', 'WINGS_CONFIG') != ''
     - not wings_config_exists.stat.exists or wings_config_exists.stat.size == 0
 
