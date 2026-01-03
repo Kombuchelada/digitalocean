@@ -1,4 +1,4 @@
 resource "digitalocean_domain" "default" {
   name       = var.domain
-  ip_address = digitalocean_droplet.www-1.ipv4_address
+  ip_address = digitalocean_floating_ip.www-1.ip_address
 }
