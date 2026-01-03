@@ -14,3 +14,12 @@ resource "digitalocean_droplet" "www-1" {
     timeout     = "2m"
   }
 }
+
+resource "digitalocean_floating_ip" "www-1" {
+  region = digitalocean_droplet.www-1.region
+}
+
+resource "digitalocean_floating_ip_assignment" "www-1" {
+  ip_address = digitalocean_floating_ip.www-1.ip_address
+  droplet_id = digitalocean_droplet.www-1.id
+}
