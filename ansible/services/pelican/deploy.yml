@@ -368,6 +368,7 @@
   loop:
     - "{{ pelican_mount_path }}/wings"
     - "{{ pelican_mount_path }}/wings/logs"
+    - "{{ pelican_mount_path }}/wings/data"
 
 - name: Create Wings data directory on persistent volume
   ansible.builtin.file:
