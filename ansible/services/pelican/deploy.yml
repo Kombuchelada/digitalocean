@@ -358,6 +358,17 @@
     append: true
     state: present
 
+- name: Create Wings system directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: wings
+    group: wings
+    mode: "0755"
+  loop:
+    - /var/log/pelican
+    - /var/lib/pelican
+
 - name: Create Wings directory structure on volume
   ansible.builtin.file:
     path: "{{ item }}"
