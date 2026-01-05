@@ -23,3 +23,5 @@ override.tf.json
 # Ansible
 *.retry
 .ansible/
+
+wings_config.yaml
