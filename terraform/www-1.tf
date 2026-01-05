@@ -13,18 +13,15 @@ resource "digitalocean_droplet" "www-1" {
       - |
         set -euo pipefail
         SWAPFILE="/swapfile"
-        if [ ! -f "${SWAPFILE}" ]; then
+        if [ ! -f "$${SWAPFILE}" ]; then
           # Try fallocate first, fall back to dd if needed
-          fallocate -l 4G "${SWAPFILE}" || dd if=/dev/zero of="${SWAPFILE}" bs=1M count=4096 status=progress
-          chmod 600 "${SWAPFILE}"
-          mkswap "${SWAPFILE}"
+          fallocate -l 4G "$${SWAPFILE}" || dd if=/dev/zero of="$${SWAPFILE}" bs=1M count=4096 status=progress
+          chmod 600 "$${SWAPFILE}"
+          mkswap "$${SWAPFILE}"
         fi
-        swapon "${SWAPFILE}" || true
+        swapon "$${SWAPFILE}" || true
         grep -q "^/swapfile " /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
-        cat <<'EOF' > /etc/sysctl.d/99-swap-tuning.conf
-        vm.swappiness = 10
-        vm.vfs_cache_pressure = 50
-        EOF
+        printf "vm.swappiness = 10\nvm.vfs_cache_pressure = 50\n" > /etc/sysctl.d/99-swap-tuning.conf
         sysctl -p /etc/sysctl.d/99-swap-tuning.conf || true
   EOT
 
