@@ -439,10 +439,13 @@
     state: present
     driver: bridge
 
-- name: Check if Wings config already exists
-  ansible.builtin.stat:
-    path: "{{ pelican_mount_path }}/wings/config.yml"
-  register: wings_config_exists
+- name: Create pelican0 Docker network for Wings
+  community.docker.docker_network:
+    name: pelican0
+    state: present
+    driver: bridge
+    ipam_config:
+      - subnet: 10.200.10.0/24
 
 - name: Copy Wings config.yml from environment variable
   ansible.builtin.copy:
@@ -451,14 +454,12 @@
     group: wings
     mode: "0640"
     content: "{{ lookup('env', 'WINGS_CONFIG') }}"
-  when:
-    - lookup('env', 'WINGS_CONFIG') != ''
-    - not wings_config_exists.stat.exists or wings_config_exists.stat.size == 0
+  when: lookup('env', 'WINGS_CONFIG') != ''
 
-- name: Warn if Wings config was not updated
+- name: Warn if Wings config was not provided
   ansible.builtin.debug:
-    msg: "WARNING: WINGS_CONFIG environment variable is empty or config already exists. Skipping config update."
-  when: lookup('env', 'WINGS_CONFIG') == '' or (wings_config_exists.stat.exists and wings_config_exists.stat.size > 0)
+    msg: "WARNING: WINGS_CONFIG environment variable is empty. Wings config must be configured manually."
+  when: lookup('env', 'WINGS_CONFIG') == ''
 
 - name: Download Wings binary
   ansible.builtin.get_url:

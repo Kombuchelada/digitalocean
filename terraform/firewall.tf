@@ -45,10 +45,38 @@ resource "digitalocean_firewall" "www-1" {
     source_addresses = ["0.0.0.0/0", "::/0"]
   }
 
+  # Satisfactory server - Query port (TCP)
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "15000"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
   # Satisfactory server - Beacon port
   inbound_rule {
     protocol         = "udp"
     port_range       = "15777"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Satisfactory server - Beacon port (TCP)
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "15777"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Satisfactory server - Reliable messaging port
+  inbound_rule {
+    protocol         = "udp"
+    port_range       = "8888"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Satisfactory server - Reliable messaging port (TCP)
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "8888"
     source_addresses = ["0.0.0.0/0", "::/0"]
   }
 
