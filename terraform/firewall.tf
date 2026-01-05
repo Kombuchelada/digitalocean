@@ -24,6 +24,34 @@ resource "digitalocean_firewall" "www-1" {
     source_addresses = ["0.0.0.0/0", "::/0"]
   }
 
+  # Satisfactory server - Game port (UDP)
+  inbound_rule {
+    protocol         = "udp"
+    port_range       = "7777"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Satisfactory server - API port (TCP)
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "7777"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Satisfactory server - Query port
+  inbound_rule {
+    protocol         = "udp"
+    port_range       = "15000"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Satisfactory server - Beacon port
+  inbound_rule {
+    protocol         = "udp"
+    port_range       = "15777"
+    source_addresses = ["0.0.0.0/0", "::/0"]
+  }
+
   # Allow all outbound
   outbound_rule {
     protocol              = "tcp"

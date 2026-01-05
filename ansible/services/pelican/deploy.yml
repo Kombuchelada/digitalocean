@@ -358,6 +358,14 @@
     append: true
     state: present
 
+- name: Create Pelican SFTP user for Wings
+  ansible.builtin.user:
+    name: pelican
+    shell: /bin/false
+    home: /home/pelican
+    createhome: true
+    state: present
+
 - name: Create Wings system directories
   ansible.builtin.file:
     path: "{{ item }}"
@@ -404,6 +412,32 @@
     - { src: "{{ pelican_mount_path }}/wings/logs", dest: "/var/log/pelican" }
     - { src: "{{ pelican_mount_path }}/wings/lib", dest: "/var/lib/pelican" }
     - { src: "{{ pelican_mount_path }}/wings/etc", dest: "/etc/pelican" }
+
+- name: Create logrotate config for Wings
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/wings
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      /var/log/pelican/*.log {
+        daily
+        rotate 7
+        compress
+        delaycompress
+        notifempty
+        create 0640 wings wings
+        sharedscripts
+        postrotate
+          systemctl reload wings > /dev/null 2>&1 || true
+        endscript
+      }
+
+- name: Create Docker network for Pelican Wings
+  community.docker.docker_network:
+    name: pelican_nw
+    state: present
+    driver: bridge
 
 - name: Check if Wings config already exists
   ansible.builtin.stat:
@@ -454,6 +488,7 @@
       RestartSec=5s
       StartLimitInterval=600
       StartLimitBurst=3
+      AmbientCapabilities=CAP_CHOWN CAP_SETUID CAP_SETGID CAP_DAC_OVERRIDE
 
       StandardOutput=journal
       StandardError=journal
