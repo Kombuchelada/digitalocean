@@ -1,0 +1,53 @@
+---
+- name: Create Emby directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ emby_mount_path }}"
+    - "{{ emby_config_dir }}"
+    - "{{ emby_media_dir }}"
+
+- name: Create docker-compose.yml for Emby
+  ansible.builtin.copy:
+    src: docker-compose.yml
+    dest: "{{ emby_mount_path }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  register: emby_compose
+
+- name: Restart Emby if compose file changed
+  block:
+    - name: Stop Emby completely
+      community.docker.docker_compose_v2:
+        project_src: "{{ emby_mount_path }}"
+        state: absent
+
+    - name: Wait for containers to fully stop
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Start Emby via docker-compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ emby_mount_path }}"
+        state: present
+  when: emby_compose.changed
+
+- name: Ensure Emby is running
+  community.docker.docker_compose_v2:
+    project_src: "{{ emby_mount_path }}"
+    state: present
+  when: not emby_compose.changed
+  register: emby_output
+
+- name: Show Emby deployment status
+  ansible.builtin.debug:
+    msg:
+      - "Emby is running"
+      - "Access at: http://{{ ansible_host }}:8096"
+      - "Config: {{ emby_config_dir }}"
+      - "Media: {{ emby_media_dir }}"

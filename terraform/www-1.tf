@@ -6,6 +6,19 @@ resource "digitalocean_droplet" "www-1" {
   ssh_keys   = [data.digitalocean_ssh_key.xXMacbookXx.id]
   monitoring = true
 
+  user_data = <<-EOF
+              #cloud-config
+              runcmd:
+                - |
+                  if ! swapon --show | grep -q '^/'; then
+                    fallocate -l ${var.swap_size} /swapfile
+                    chmod 600 /swapfile
+                    mkswap /swapfile
+                    swapon /swapfile
+                    echo '/swapfile none swap sw 0 0' >> /etc/fstab
+                  fi
+              EOF
+
   connection {
     host        = self.ipv4_address
     user        = "root"

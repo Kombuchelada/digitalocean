@@ -232,6 +232,19 @@
     mode: "0640"
   when: lookup('env', 'PELICAN_APP_KEY') != ''
 
+- name: Check whether APP_KEY is present
+  ansible.builtin.command: grep -E "^APP_KEY=.+" /var/www/pelican/.env
+  register: pelican_app_key
+  changed_when: false
+  failed_when: false
+
+- name: Generate application key when missing
+  become_user: www-data
+  ansible.builtin.command: php artisan key:generate --force
+  args:
+    chdir: /var/www/pelican
+  when: pelican_app_key.rc != 0
+
 - name: Create systemd service for Pelican queue worker
   ansible.builtin.copy:
     dest: /etc/systemd/system/pelican-worker.service

@@ -1,0 +1,16 @@
+services:
+  emby:
+    image: emby/embyserver:latest
+    restart: unless-stopped
+    ports:
+      - "8096:8096"
+    environment:
+      TZ: "America/Los_Angeles"
+    volumes:
+      - /mnt/docker-data/services/emby/config:/config
+      - /mnt/docker-data/services/emby/media:/media
+
+networks:
+  default:
+    name: services_network
+    external: true

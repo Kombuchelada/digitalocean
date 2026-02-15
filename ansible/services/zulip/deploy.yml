@@ -1,0 +1,89 @@
+---
+- name: Create Zulip directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ zulip_mount_path }}"
+    - "{{ zulip_data_dir }}"
+    - "{{ zulip_postgres_dir }}"
+    - "{{ zulip_rabbitmq_dir }}"
+    - "{{ zulip_redis_dir }}"
+
+- name: Ensure Zulip secrets are set
+  ansible.builtin.assert:
+    that:
+      - lookup('env', 'ZULIP__POSTGRES_PASSWORD') != ''
+      - lookup('env', 'ZULIP__MEMCACHED_PASSWORD') != ''
+      - lookup('env', 'ZULIP__RABBITMQ_PASSWORD') != ''
+      - lookup('env', 'ZULIP__REDIS_PASSWORD') != ''
+      - lookup('env', 'ZULIP__SECRET_KEY') != ''
+    fail_msg: >-
+      Set the required environment variables on the Ansible controller:
+      ZULIP__POSTGRES_PASSWORD, ZULIP__MEMCACHED_PASSWORD,
+      ZULIP__RABBITMQ_PASSWORD, ZULIP__REDIS_PASSWORD,
+      ZULIP__SECRET_KEY.
+
+- name: Create docker-compose.yml for Zulip
+  ansible.builtin.copy:
+    src: docker-compose.yml
+    dest: "{{ zulip_mount_path }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  register: zulip_compose
+
+- name: Create Zulip env file
+  ansible.builtin.copy:
+    dest: "{{ zulip_mount_path }}/.env"
+    owner: root
+    group: root
+    mode: "0640"
+    content: |
+      ZULIP__POSTGRES_PASSWORD={{ lookup('env', 'ZULIP__POSTGRES_PASSWORD') }}
+      ZULIP__MEMCACHED_PASSWORD={{ lookup('env', 'ZULIP__MEMCACHED_PASSWORD') }}
+      ZULIP__RABBITMQ_PASSWORD={{ lookup('env', 'ZULIP__RABBITMQ_PASSWORD') }}
+      ZULIP__REDIS_PASSWORD={{ lookup('env', 'ZULIP__REDIS_PASSWORD') }}
+      ZULIP__SECRET_KEY={{ lookup('env', 'ZULIP__SECRET_KEY') }}
+      SETTING_EXTERNAL_HOST={{ zulip_external_host }}
+      SETTING_ZULIP_ADMINISTRATOR={{ zulip_admin_email }}
+      TRUST_GATEWAY_IP=True
+      {% if zulip_loadbalancer_ips %}LOADBALANCER_IPS={{ zulip_loadbalancer_ips }}
+      {% endif %}
+      ZULIP_HTTP_PORT={{ zulip_http_port }}
+  register: zulip_env_file
+
+- name: Restart Zulip if compose or env file changed
+  block:
+    - name: Stop Zulip completely
+      community.docker.docker_compose_v2:
+        project_src: "{{ zulip_mount_path }}"
+        state: absent
+
+    - name: Wait for containers to fully stop
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Start Zulip via docker-compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ zulip_mount_path }}"
+        state: present
+  when: zulip_compose.changed or zulip_env_file.changed
+
+- name: Ensure Zulip is running
+  community.docker.docker_compose_v2:
+    project_src: "{{ zulip_mount_path }}"
+    state: present
+  when: not (zulip_compose.changed or zulip_env_file.changed)
+  register: zulip_output
+
+- name: Show Zulip deployment status
+  ansible.builtin.debug:
+    msg:
+      - "Zulip is running"
+      - "Access at: http://{{ ansible_host }}:{{ zulip_http_port }}"
+      - "External host: {{ zulip_external_host }}"
+      - "Admin email: {{ zulip_admin_email }}"

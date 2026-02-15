@@ -25,6 +25,21 @@
       - "{{ services_dir }}/pelican/logs"
     pelican_db_dir: "{{ services_dir }}/pelican/db"
     stashapp_mount_path: "{{ mount_path }}/stashapp"
+    emby_mount_path: "{{ services_dir }}/emby"
+    emby_config_dir: "{{ emby_mount_path }}/config"
+    emby_media_dir: "{{ emby_mount_path }}/media"
+    emby_dirs:
+      - "{{ emby_config_dir }}"
+      - "{{ emby_media_dir }}"
+    zulip_mount_path: "{{ services_dir }}/zulip"
+    zulip_data_dir: "{{ zulip_mount_path }}/data"
+    zulip_postgres_dir: "{{ zulip_mount_path }}/postgresql-14"
+    zulip_rabbitmq_dir: "{{ zulip_mount_path }}/rabbitmq"
+    zulip_redis_dir: "{{ zulip_mount_path }}/redis"
+    zulip_external_host: "{{ lookup('env', 'ZULIP_EXTERNAL_HOST') | default('zulip.' + domain, true) }}"
+    zulip_admin_email: "{{ lookup('env', 'ZULIP_ADMIN_EMAIL') | default('admin@' + domain, true) }}"
+    zulip_http_port: "{{ lookup('env', 'ZULIP_HTTP_PORT') | default('8081', true) }}"
+    zulip_loadbalancer_ips: "{{ lookup('env', 'ZULIP_LOADBALANCER_IPS') | default('172.18.0.0/16', true) }}"
     domain: "{{ lookup('env', 'DOMAIN') }}"
   tasks:
     - name: Include volume setup
@@ -40,3 +55,15 @@
 
     - name: Include Stashapp deployment
       ansible.builtin.include_tasks: services/stashapp/deploy.yml
+
+    - name: Include Emby deployment
+      ansible.builtin.include_tasks: services/emby/deploy.yml
+
+    - name: Include Zulip deployment
+      ansible.builtin.include_tasks:
+        file: services/zulip/deploy.yml
+        apply:
+          tags:
+            - zulip
+      tags:
+        - zulip
