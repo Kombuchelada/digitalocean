@@ -21,11 +21,12 @@
       - lookup('env', 'ZULIP__RABBITMQ_PASSWORD') != ''
       - lookup('env', 'ZULIP__REDIS_PASSWORD') != ''
       - lookup('env', 'ZULIP__SECRET_KEY') != ''
+      - lookup('env', 'ZULIP__EMAIL_PASSWORD') != ''
     fail_msg: >-
       Set the required environment variables on the Ansible controller:
       ZULIP__POSTGRES_PASSWORD, ZULIP__MEMCACHED_PASSWORD,
       ZULIP__RABBITMQ_PASSWORD, ZULIP__REDIS_PASSWORD,
-      ZULIP__SECRET_KEY.
+      ZULIP__SECRET_KEY, ZULIP__EMAIL_PASSWORD.
 
 - name: Create docker-compose.yml for Zulip
   ansible.builtin.copy:
@@ -48,6 +49,13 @@
       ZULIP__RABBITMQ_PASSWORD={{ lookup('env', 'ZULIP__RABBITMQ_PASSWORD') }}
       ZULIP__REDIS_PASSWORD={{ lookup('env', 'ZULIP__REDIS_PASSWORD') }}
       ZULIP__SECRET_KEY={{ lookup('env', 'ZULIP__SECRET_KEY') }}
+      SETTING_EMAIL_HOST={{ lookup('env', 'ZULIP_EMAIL_HOST') | default('smtp.mail.me.com', true) }}
+      SETTING_EMAIL_PORT={{ lookup('env', 'ZULIP_EMAIL_PORT') | default('587', true) }}
+      SETTING_EMAIL_HOST_USER={{ lookup('env', 'ZULIP_EMAIL_USER') | default(zulip_admin_email, true) }}
+      SETTING_EMAIL_HOST_PASSWORD={{ lookup('env', 'ZULIP__EMAIL_PASSWORD') }}
+      SETTING_EMAIL_USE_TLS={{ lookup('env', 'ZULIP_EMAIL_USE_TLS') | default('True', true) }}
+      SETTING_DEFAULT_FROM_EMAIL={{ lookup('env', 'ZULIP_DEFAULT_FROM_EMAIL') | default('Zulip <noreply@' + domain + '>', true) }}
+      SETTING_NOREPLY_EMAIL_ADDRESS={{ lookup('env', 'ZULIP_NOREPLY_EMAIL_ADDRESS') | default('noreply@' + domain, true) }}
       SETTING_EXTERNAL_HOST={{ zulip_external_host }}
       SETTING_ZULIP_ADMINISTRATOR={{ zulip_admin_email }}
       TRUST_GATEWAY_IP=True

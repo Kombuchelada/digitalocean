@@ -14,6 +14,14 @@
     - /mnt/docker-data/services/stashapp/metadata
     - /mnt/docker-data/services/stashapp/cache
 
+- name: Set RCHIVER_DOWNLOAD_DIR system-wide
+  ansible.builtin.lineinfile:
+    path: /etc/environment
+    regexp: "^RCHIVER_DOWNLOAD_DIR="
+    line: "RCHIVER_DOWNLOAD_DIR=/mnt/docker-data/services/stashapp/data"
+    create: true
+    mode: "0644"
+
 - name: Create docker-compose.yml for stashapp
   ansible.builtin.copy:
     src: docker-compose.yml
