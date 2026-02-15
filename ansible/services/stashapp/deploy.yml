@@ -22,6 +22,14 @@
     create: true
     mode: "0644"
 
+- name: Set RCHIVER_DB_DIR system-wide
+  ansible.builtin.lineinfile:
+    path: /etc/environment
+    regexp: "^RCHIVER_DB_DIR="
+    line: "RCHIVER_DB_DIR=/mnt/docker-data/services/stashapp/rchiverdb/"
+    create: true
+    mode: "0644"
+
 - name: Create docker-compose.yml for stashapp
   ansible.builtin.copy:
     src: docker-compose.yml

@@ -67,3 +67,4 @@
             - zulip
       tags:
         - zulip
+      when: enable_zulip | default(false)
