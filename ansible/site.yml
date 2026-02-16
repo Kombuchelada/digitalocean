@@ -52,7 +52,7 @@
       ansible.builtin.include_tasks: services/nginx-proxy-manager/deploy.yml
 
     - name: Include Pelican Game Server deployment
-      ansible.builtin.include_tasks: services/pelican/deploy.yml
+      ansible.builtin.include_tasks:
         file: services/pelican/deploy.yml
         apply:
           tags:
