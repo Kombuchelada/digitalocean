@@ -78,6 +78,12 @@ jobs:
       ANSIBLE_HOST: ${{ needs.terraform.outputs.droplet_ip }}
       DOMAIN: ${{ secrets.DOMAIN }}
       PELICAN_APP_KEY: ${{ secrets.PELICAN_APP_KEY }}
+      ZULIP__POSTGRES_PASSWORD: ${{ secrets.ZULIP__POSTGRES_PASSWORD }}
+      ZULIP__MEMCACHED_PASSWORD: ${{ secrets.ZULIP__MEMCACHED_PASSWORD }}
+      ZULIP__RABBITMQ_PASSWORD: ${{ secrets.ZULIP__RABBITMQ_PASSWORD }}
+      ZULIP__REDIS_PASSWORD: ${{ secrets.ZULIP__REDIS_PASSWORD }}
+      ZULIP__SECRET_KEY: ${{ secrets.ZULIP__SECRET_KEY }}
+      ZULIP__EMAIL_PASSWORD: ${{ secrets.ZULIP__EMAIL_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
