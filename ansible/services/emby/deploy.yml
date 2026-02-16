@@ -10,6 +10,7 @@
     - "{{ emby_mount_path }}"
     - "{{ emby_config_dir }}"
     - "{{ emby_media_dir }}"
+    - "{{ emby_dad_media_dir }}"
 
 - name: Create docker-compose.yml for Emby
   ansible.builtin.copy:

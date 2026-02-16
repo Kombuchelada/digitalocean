@@ -9,6 +9,7 @@ services:
     volumes:
       - /mnt/docker-data/services/emby/config:/config
       - /mnt/docker-data/services/emby/media:/media
+      - /mnt/docker-data/services/emby/dad-media:/dad-media
 
 networks:
   default:

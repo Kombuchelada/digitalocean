@@ -28,6 +28,7 @@
     emby_mount_path: "{{ services_dir }}/emby"
     emby_config_dir: "{{ emby_mount_path }}/config"
     emby_media_dir: "{{ emby_mount_path }}/media"
+    emby_dad_media_dir: "{{ emby_mount_path }}/dad-media"
     emby_dirs:
       - "{{ emby_config_dir }}"
       - "{{ emby_media_dir }}"
@@ -52,9 +53,22 @@
 
     - name: Include Pelican Game Server deployment
       ansible.builtin.include_tasks: services/pelican/deploy.yml
+        file: services/pelican/deploy.yml
+        apply:
+          tags:
+            - pelican
+      tags:
+        - pelican
+      when: enable_pelican | default(false)
 
     - name: Include Stashapp deployment
-      ansible.builtin.include_tasks: services/stashapp/deploy.yml
+      ansible.builtin.include_tasks:
+        file: services/stashapp/deploy.yml
+        apply:
+          tags:
+            - stash
+      tags:
+        - stash
 
     - name: Include Emby deployment
       ansible.builtin.include_tasks: services/emby/deploy.yml
@@ -67,4 +81,4 @@
             - zulip
       tags:
         - zulip
-      when: enable_zulip | default(false)
+      # when: enable_zulip | default(false)
