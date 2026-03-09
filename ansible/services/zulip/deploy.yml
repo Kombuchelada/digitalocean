@@ -56,6 +56,11 @@
       SETTING_EMAIL_USE_TLS={{ lookup('env', 'ZULIP_EMAIL_USE_TLS') | default('True', true) }}
       SETTING_DEFAULT_FROM_EMAIL={{ lookup('env', 'ZULIP_DEFAULT_FROM_EMAIL') | default('Zulip <noreply@' + domain + '>', true) }}
       SETTING_NOREPLY_EMAIL_ADDRESS={{ lookup('env', 'ZULIP_NOREPLY_EMAIL_ADDRESS') | default('noreply@' + domain, true) }}
+      SETTING_ADD_TOKENS_TO_NOREPLY_ADDRESS={{ lookup('env', 'ZULIP_ADD_TOKENS_TO_NOREPLY_ADDRESS') | default('False', true) }}
+      SETTING_SIGNED_ACCESS_TOKEN_VALIDITY_IN_SECONDS={{ lookup('env', 'ZULIP_SIGNED_ACCESS_TOKEN_VALIDITY_IN_SECONDS') | default('0', true) }}
+      ZULIP_SERVICE_PUSH_NOTIFICATIONS={{ lookup('env', 'ZULIP_SERVICE_PUSH_NOTIFICATIONS') | default('True', true) }}
+      SETTING_ZULIP_SERVICE_PUSH_NOTIFICATIONS={{ lookup('env', 'ZULIP_SERVICE_PUSH_NOTIFICATIONS') | default('True', true) }}
+      ZULIP_SERVICE_SUBMIT_USAGE_STATISTICS={{ lookup('env', 'ZULIP_SERVICE_SUBMIT_USAGE_STATISTICS') | default('False', true) }}
       SETTING_EXTERNAL_HOST={{ zulip_external_host }}
       SETTING_ZULIP_ADMINISTRATOR={{ zulip_admin_email }}
       TRUST_GATEWAY_IP=True
