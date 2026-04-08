@@ -69,7 +69,7 @@ jobs:
           DOMAIN: ${{ secrets.DOMAIN }}
           SPACES_ACCESS_KEY_ID: ${{ secrets.SPACES_ACCESS_KEY_ID }}
           SPACES_SECRET_ACCESS_KEY: ${{ secrets.SPACES_SECRET_KEY }}
-        run: terraform plan -input=false -out=tfplan -var="do_token=$DIGITALOCEAN_ACCESS_TOKEN" -var="domain=$DOMAIN" -var="spaces_access_key_id=$SPACES_ACCESS_KEY_ID" -var="spaces_secret_key=$SPACES_SECRET_ACCESS_KEY"
+        run: terraform plan -input=false -out=tfplan -var="do_token=$DIGITALOCEAN_ACCESS_TOKEN" -var="domain=$DOMAIN"
 
       - name: Terraform Apply (main only)
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -79,7 +79,7 @@ jobs:
           DOMAIN: ${{ secrets.DOMAIN }}
           SPACES_ACCESS_KEY_ID: ${{ secrets.SPACES_ACCESS_KEY_ID }}
           SPACES_SECRET_ACCESS_KEY: ${{ secrets.SPACES_SECRET_KEY }}
-        run: terraform apply -input=false -auto-approve -replace="digitalocean_droplet.www-1" -var="do_token=$DIGITALOCEAN_ACCESS_TOKEN" -var="domain=$DOMAIN" -var="spaces_access_key_id=$SPACES_ACCESS_KEY_ID" -var="spaces_secret_key=$SPACES_SECRET_ACCESS_KEY" tfplan
+        run: terraform apply -input=false -auto-approve -replace="digitalocean_droplet.www-1" -var="do_token=$DIGITALOCEAN_ACCESS_TOKEN" -var="domain=$DOMAIN" tfplan
 
       - name: Capture Terraform outputs
         id: outputs_step
