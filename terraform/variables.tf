@@ -21,3 +21,15 @@ variable "spaces_key_name" {
   type        = string
   default     = "emby-spaces-key"
 }
+
+variable "spaces_access_key_id" {
+  description = "DigitalOcean Spaces access key ID (from API → Spaces Keys)."
+  type        = string
+  sensitive   = true
+}
+
+variable "spaces_secret_key" {
+  description = "DigitalOcean Spaces secret access key (from API → Spaces Keys)."
+  type        = string
+  sensitive   = true
+}
