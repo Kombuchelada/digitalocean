@@ -12,9 +12,7 @@ variable "pvt_key" {}
 variable "domain" {}
 
 provider "digitalocean" {
-  token             = var.do_token
-  spaces_access_id  = var.spaces_access_key_id
-  spaces_secret_key = var.spaces_secret_key
+  token = var.do_token
 }
 
 data "digitalocean_ssh_key" "xXMacbookXx" {

@@ -54,8 +54,6 @@ jobs:
         run: |
           echo "TF_VAR_do_token=$DIGITALOCEAN_ACCESS_TOKEN" >> $GITHUB_ENV
           echo "TF_VAR_domain=$DOMAIN" >> $GITHUB_ENV
-          echo "TF_VAR_spaces_access_key_id=$SPACES_ACCESS_KEY_ID" >> $GITHUB_ENV
-          echo "TF_VAR_spaces_secret_key=$SPACES_SECRET_KEY" >> $GITHUB_ENV
           echo "SPACES_ACCESS_KEY_ID=$SPACES_ACCESS_KEY_ID" >> $GITHUB_ENV
           echo "SPACES_SECRET_ACCESS_KEY=$SPACES_SECRET_KEY" >> $GITHUB_ENV
 
