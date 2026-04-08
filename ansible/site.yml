@@ -28,10 +28,12 @@
     emby_mount_path: "{{ services_dir }}/emby"
     emby_config_dir: "{{ emby_mount_path }}/config"
     emby_media_dir: "{{ emby_mount_path }}/media"
+    emby_spaces_media_dir: "{{ emby_mount_path }}/spaces-media"
     emby_dad_media_dir: "{{ emby_mount_path }}/dad-media"
     emby_dirs:
       - "{{ emby_config_dir }}"
       - "{{ emby_media_dir }}"
+      - "{{ emby_spaces_media_dir }}"
     zulip_mount_path: "{{ services_dir }}/zulip"
     zulip_data_dir: "{{ zulip_mount_path }}/data"
     zulip_postgres_dir: "{{ zulip_mount_path }}/postgresql-14"
@@ -42,9 +44,15 @@
     zulip_http_port: "{{ lookup('env', 'ZULIP_HTTP_PORT') | default('8081', true) }}"
     zulip_loadbalancer_ips: "{{ lookup('env', 'ZULIP_LOADBALANCER_IPS') | default('172.18.0.0/16', true) }}"
     domain: "{{ lookup('env', 'DOMAIN') }}"
+    spaces_region: sfo2
+    spaces_bucket: "{{ lookup('env', 'SPACES_BUCKET') | default('emby-library-' + (domain | default('local') | lower | regex_replace('[^a-z0-9]+','-')), true) }}"
+    spaces_access_key_id: "{{ lookup('env', 'SPACES_ACCESS_KEY_ID') }}"
+    spaces_secret_access_key: "{{ lookup('env', 'SPACES_SECRET_ACCESS_KEY') }}"
   tasks:
     - name: Include volume setup
       ansible.builtin.include_tasks: volume.yml
+    - name: Include DigitalOcean Spaces mount setup
+      ansible.builtin.include_tasks: spaces.yml
     - name: Include Docker installation
       ansible.builtin.include_tasks: docker.yml
 

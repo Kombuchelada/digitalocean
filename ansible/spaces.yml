@@ -1,0 +1,60 @@
+---
+- name: Ensure Spaces credential variables are present
+  ansible.builtin.assert:
+    that:
+      - spaces_access_key_id is defined
+      - spaces_secret_access_key is defined
+      - spaces_access_key_id != ''
+      - spaces_secret_access_key != ''
+      - spaces_bucket is defined
+      - spaces_bucket != ''
+    fail_msg: "SPACES_ACCESS_KEY_ID, SPACES_SECRET_ACCESS_KEY, and SPACES_BUCKET must be set to mount DigitalOcean Spaces for Emby."
+
+- name: Install FUSE and s3fs
+  ansible.builtin.apt:
+    name:
+      - fuse
+      - s3fs
+    state: present
+    update_cache: true
+
+- name: Allow FUSE mounts with allow_other
+  ansible.builtin.lineinfile:
+    path: /etc/fuse.conf
+    line: user_allow_other
+    create: yes
+    state: present
+
+- name: Create DigitalOcean Spaces credentials file for s3fs
+  ansible.builtin.copy:
+    dest: /root/.passwd-s3fs
+    owner: root
+    group: root
+    mode: "0600"
+    content: "{{ spaces_access_key_id }}:{{ spaces_secret_access_key }}"
+
+- name: Create Emby media mount directory for Spaces
+  ansible.builtin.file:
+    path: "{{ emby_spaces_media_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Mount DigitalOcean Spaces bucket for Emby media
+  ansible.posix.mount:
+    path: "{{ emby_spaces_media_dir }}"
+    src: "{{ spaces_bucket }}"
+    fstype: fuse.s3fs
+    opts: "rw,allow_other,passwd_file=/root/.passwd-s3fs,url=https://{{ spaces_region }}.digitaloceanspaces.com,use_path_request_style,retries=5"
+    state: mounted
+
+- name: Show resulting Emby media mount
+  ansible.builtin.command: df -h "{{ emby_spaces_media_dir }}"
+  register: emby_spaces_df
+  changed_when: false
+
+- name: Debug Emby Spaces mount
+  ansible.builtin.debug:
+    msg:
+      - "Spaces bucket: {{ spaces_bucket }}"
+      - "Mounted at: {{ emby_spaces_media_dir }}"
+      - "Endpoint: https://{{ spaces_region }}.digitaloceanspaces.com"

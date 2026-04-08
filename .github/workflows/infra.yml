@@ -22,6 +22,9 @@ jobs:
         working-directory: terraform
     outputs:
       droplet_ip: ${{ steps.outputs_step.outputs.www_1_ip }}
+      spaces_bucket_name: ${{ steps.outputs_step.outputs.spaces_bucket_name }}
+      spaces_access_key_id: ${{ steps.outputs_step.outputs.spaces_access_key_id }}
+      spaces_secret_key: ${{ steps.outputs_step.outputs.spaces_secret_key }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,6 +71,9 @@ jobs:
         id: outputs_step
         run: |
           echo "www_1_ip=$(terraform output -raw www_1_ip)" >> $GITHUB_OUTPUT
+          echo "spaces_bucket_name=$(terraform output -raw spaces_bucket_name)" >> $GITHUB_OUTPUT
+          echo "spaces_access_key_id=$(terraform output -raw spaces_access_key_id)" >> $GITHUB_OUTPUT
+          echo "spaces_secret_key=$(terraform output -raw spaces_secret_key)" >> $GITHUB_OUTPUT
 
   ansible:
     name: Ansible Configure Host
@@ -77,6 +83,9 @@ jobs:
     env:
       ANSIBLE_HOST: ${{ needs.terraform.outputs.droplet_ip }}
       DOMAIN: ${{ secrets.DOMAIN }}
+      SPACES_BUCKET: ${{ needs.terraform.outputs.spaces_bucket_name }}
+      SPACES_ACCESS_KEY_ID: ${{ needs.terraform.outputs.spaces_access_key_id }}
+      SPACES_SECRET_ACCESS_KEY: ${{ needs.terraform.outputs.spaces_secret_key }}
       PELICAN_APP_KEY: ${{ secrets.PELICAN_APP_KEY }}
       ZULIP__POSTGRES_PASSWORD: ${{ secrets.ZULIP__POSTGRES_PASSWORD }}
       ZULIP__MEMCACHED_PASSWORD: ${{ secrets.ZULIP__MEMCACHED_PASSWORD }}
@@ -120,6 +129,9 @@ jobs:
             -w /work \
             -e ANSIBLE_HOST="${ANSIBLE_HOST}" \
             -e DOMAIN="${DOMAIN}" \
+            -e SPACES_BUCKET="${SPACES_BUCKET}" \
+            -e SPACES_ACCESS_KEY_ID="${SPACES_ACCESS_KEY_ID}" \
+            -e SPACES_SECRET_ACCESS_KEY="${SPACES_SECRET_ACCESS_KEY}" \
             -e PELICAN_APP_KEY="${PELICAN_APP_KEY}" \
             -e ZULIP__POSTGRES_PASSWORD="${ZULIP__POSTGRES_PASSWORD}" \
             -e ZULIP__MEMCACHED_PASSWORD="${ZULIP__MEMCACHED_PASSWORD}" \
