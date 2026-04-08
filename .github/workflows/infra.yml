@@ -56,6 +56,8 @@ jobs:
           echo "TF_VAR_domain=$DOMAIN" >> $GITHUB_ENV
           echo "TF_VAR_spaces_access_key_id=$SPACES_ACCESS_KEY_ID" >> $GITHUB_ENV
           echo "TF_VAR_spaces_secret_key=$SPACES_SECRET_KEY" >> $GITHUB_ENV
+          echo "SPACES_ACCESS_KEY_ID=$SPACES_ACCESS_KEY_ID" >> $GITHUB_ENV
+          echo "SPACES_SECRET_ACCESS_KEY=$SPACES_SECRET_KEY" >> $GITHUB_ENV
 
       - name: Terraform Init
         run: terraform init -input=false
@@ -64,11 +66,19 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          SPACES_ACCESS_KEY_ID: ${{ secrets.SPACES_ACCESS_KEY_ID }}
+          SPACES_SECRET_ACCESS_KEY: ${{ secrets.SPACES_SECRET_KEY }}
         run: terraform plan -input=false -out=tfplan
 
       - name: Terraform Apply (main only)
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         continue-on-error: true
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          SPACES_ACCESS_KEY_ID: ${{ secrets.SPACES_ACCESS_KEY_ID }}
+          SPACES_SECRET_ACCESS_KEY: ${{ secrets.SPACES_SECRET_KEY }}
         run: terraform apply -input=false -auto-approve -replace="digitalocean_droplet.www-1" tfplan
 
       - name: Capture Terraform outputs
